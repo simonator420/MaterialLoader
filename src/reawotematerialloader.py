@@ -372,6 +372,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
         
     def Command(self, id, msg,):
         self.Reset()
+        active_checkbox_list = []
+        name = ""
         if id == ID.DIALOG_FOLDER_BUTTON:
             # self.HandleFolderSelect()
 
@@ -397,13 +399,13 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 folder_dict [folder] = True
                 # check box se pouze jmenuje stejne slozka, nereprezentuje ho
                 checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, 1, 1, folder)
+                name = os.path.basename(folder)
+                # checkbox = os.path.basename(name)
                 checkbox_list.append(checkbox)
                 print(f"{folder} checkbox byl vytvoren a pridan do listu")
+                # print(checkbox)
 
         active_checkbox_list = []
-        # for checkbox in checkbox_list:
-        #     if self.GetBool(ID.DIALOG_LIST_CHECKBOX):
-        #         active_checkbox_list.append(checkbox)
 
         if id == ID.DIALOG_LIST_BUTTON:
             print("Active checkboxes:")
@@ -411,6 +413,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 if self.GetBool(checkbox):
                     active_checkbox_list.append(checkbox)
                     print(checkbox)
+            
         
             # folder_list = "\n".joMayin([f"{folder}: {checked}" for folder, checked in folder_dict.items()])
             folder_list = []
