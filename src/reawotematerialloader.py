@@ -8,6 +8,8 @@ REAWOTE_PLUGIN_ID=1056421
 
 dialog = None
 
+checkbox_list = []
+
 # String table definitions
 IDS_REAWOTE_PBR_CONVERTER = 10000
 IDS_DIALOG_BROWSE = 10001
@@ -18,6 +20,7 @@ IDS_DIALOG_SCROLL_GROUP = 10012
 IDS_DIALOG_SCROLL_GROUP_TWO = 10016
 IDS_DIALOG_SECONDARY_GROUP = 10015
 IDS_DIALOG_LIST_CHECKBOX = 10011
+IDS_DIALOG_LIST_BUTTON = 10017
 IDS_DIALOG_FOLDER_LIST = 10013
 
 IDS_DIALOG_INCLUDE_AO = 10003
@@ -38,6 +41,7 @@ class ID():
     DIALOG_SCROLL_GROUP_TWO = 100016
     DIALOG_SECONDARY_GROUP = 10011
     DIALOG_FOLDER_LIST = 100015
+    DIALOG_LIST_BUTTON = 100017
     DIALOG_LIST_CHECKBOX = 100013
 
     DIALOG_MAP_AO_CB = 100003
@@ -351,6 +355,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         cb16bnormal = self.AddCheckbox(ID.DIALOG_MAP_16B_NORMAL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit normal maps (when available)")
         bLoad = self.AddButton(ID.DIALOG_LOAD_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Load material")
         strErr = self.AddStaticText(ID.DIALOG_ERROR, c4d.BFH_SCALEFIT, 64, 10, "", 0)
+        self.AddButton(ID.DIALOG_LIST_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Select materials")
         
         self.GroupEnd(ID.DIALOG_MAIN_GROUP)
         self.GroupEnd(ID.DIALOG_SCROLL_GROUP)
@@ -362,15 +367,63 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         self.SetTimer(1000)
 
+
         return True
         
-    def Command(self, id, msg, what=False):
+    def Command(self, id, msg,):
+        self.Reset()
         if id == ID.DIALOG_FOLDER_BUTTON:
-            self.HandleFolderSelect()
+            # self.HandleFolderSelect()
+
+            self.Reset()
+
+            path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
+            if path == None:
+                return True
+            try:
+                #python2
+                path = path.decode("utf-8")
+            except: 
+                pass
+            print(path)
+            dir = os.listdir(path)
+            
+            # TODO zde vypsat slozky, ktere jsou obsazene v "path", idealne k nim rovnou priradit checkboxy
+            same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
+            # folder_list = "\n".join(same_path_dirs)
+            # self.SetString(ID.DIALOG_FOLDER_LIST, folder_list)
+            folder_dict = {}
+            for folder in same_path_dirs:
+                folder_dict [folder] = True
+                # check box se pouze jmenuje stejne slozka, nereprezentuje ho
+                checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, 1, 1, folder)
+                checkbox_list.append(checkbox)
+                print(f"{folder} checkbox byl vytvoren a pridan do listu")
+
+        active_checkbox_list = []
+        # for checkbox in checkbox_list:
+        #     if self.GetBool(ID.DIALOG_LIST_CHECKBOX):
+        #         active_checkbox_list.append(checkbox)
+
+        if id == ID.DIALOG_LIST_BUTTON:
+            print("Active checkboxes:")
+            for checkbox in checkbox_list:
+                if self.GetBool(checkbox):
+                    active_checkbox_list.append(checkbox)
+                    print(checkbox)
+        
+            # folder_list = "\n".joMayin([f"{folder}: {checked}" for folder, checked in folder_dict.items()])
+            folder_list = []
+            # TODO nalezeni v path slozky, ktera se jmenuje jako checkbox a potom na ni provest dane operace
+            # TODO upravit spodni cast aby to sedelo na tutudu o radek up
+
             return True
+
         if id == ID.DIALOG_LOAD_BUTTON:
             self.HandleLoadMaterial()
             return True
+        
+
         return False
 
     def SetError(self, message):
@@ -521,37 +574,41 @@ class ReawoteMaterialDialog(gui.GeDialog):
             self.SetListItems(None)
         self.Reset()
 
+
     def HandleFolderSelect(self):
-        self.Reset()
+        # self.Reset()
 
-        path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
-        if path == None:
-            return True
-        try:
-            #python2
-            path = path.decode("utf-8")
-        except: 
-            pass
-        print(path)
-        dir = os.listdir(path)
+        # path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
+        # if path == None:
+        #     return True
+        # try:
+        #     #python2
+        #     path = path.decode("utf-8")
+        # except: 
+        #     pass
+        # print(path)
+        # dir = os.listdir(path)
+        
+        # # TODO zde vypsat slozky, ktere jsou obsazene v "path", idealne k nim rovnou priradit checkboxy
+        # same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
+        # # folder_list = "\n".join(same_path_dirs)
+        # # self.SetString(ID.DIALOG_FOLDER_LIST, folder_list)
+        # folder_dict = {}
+        # for folder in same_path_dirs:
+        #     folder_dict [folder] = True
+        # # for folder, checked in folder_dict.items():
+        #     checked = True
+        #     # check box se pouze jmenuje stejne slozka, nereprezentuje ho
+        #     checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, int(checked), 1, folder)
+        #     checkbox_list.append(checkbox)
+        #     print(f"{folder} checkbox byl vytvoren a pridan do listu")
+        #     self.Enable(100017, True)
 
-        # TODO zde vypsat slozky, ktere jsou obsazene v "path", idealne k nim rovnou priradit checkboxy
-        same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
-        # folder_list = "\n".join(same_path_dirs)
-        # self.SetString(ID.DIALOG_FOLDER_LIST, folder_list)
-        folder_dict = {}
-        for folder in same_path_dirs:
-            folder_dict [folder] = True
-        for folder, checked in folder_dict.items():
-            # check box se pouze jmenuje stejne slozka, nereprezentuje ho
-            checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, int(checked), 1, folder)
-        folder_list = "\n".join([f"{folder}: {checked}" for folder, checked in folder_dict.items()])
-        # TODO nalezeni v path slozky, ktera se jmenuje jako checkbox a potom na ni provest dane operace
-        # TODO upravit spodni cast aby to sedelo na tutudu o radek up
-            
-        for folder in folder_dict:
-            if self.GetBool(ID.DIALOG_LIST_CHECKBOX):
-                print(f"Success! Checkbox for folder '{folder}' is checked.")
+        # # folder_list = "\n".joMayin([f"{folder}: {checked}" for folder, checked in folder_dict.items()])
+        folder_list = []
+        # # TODO nalezeni v path slozky, ktera se jmenuje jako checkbox a potom na ni provest dane operace
+        # # TODO upravit spodni cast aby to sedelo na tutudu o radek up
+        
         
         for folder in folder_list:
             if any(x in folder for x in ["4K", "8K", "16K"]):
@@ -634,6 +691,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.Enable(ID.DIALOG_MAP_IOR_CB, False)
 
         self.Enable(ID.DIALOG_LOAD_BUTTON, False)
+        # self.Enable(ID.DIALOG_LIST_BUTTON, False)
         
 
 class ReawoteMaterialLoader(plugins.CommandData):
