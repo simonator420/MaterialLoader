@@ -9,6 +9,8 @@ REAWOTE_PLUGIN_ID=1056421
 dialog = None
 
 checkbox_list = []
+path = ""
+
 
 # String table definitions
 IDS_REAWOTE_PBR_CONVERTER = 10000
@@ -369,15 +371,37 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
 
         return True
+    
+    def InitValues(self):
+        self.materialFolder = None
+    
+        self.has16bDisp = False
+        self.has16bNormal = False
+        self.hasDisp = False
+        self.hasAO = False
+        self.hasIor = False
+        
+        self.SetBool(ID.DIALOG_MAP_AO_CB, False)
+        self.Enable(ID.DIALOG_MAP_AO_CB, False)
+        self.SetBool(ID.DIALOG_MAP_DISPL_CB, False)
+        self.Enable(ID.DIALOG_MAP_DISPL_CB, False)
+        self.SetBool(ID.DIALOG_MAP_16B_DISPL_CB, False)
+        self.Enable(ID.DIALOG_MAP_16B_DISPL_CB, False)
+        self.SetBool(ID.DIALOG_MAP_16B_NORMAL_CB, False)
+        self.Enable(ID.DIALOG_MAP_16B_NORMAL_CB, False)
+        self.SetBool(ID.DIALOG_MAP_IOR_CB, False)
+        self.Enable(ID.DIALOG_MAP_IOR_CB, False)
+
+        self.Enable(ID.DIALOG_LOAD_BUTTON, False)
+
+        self.Enable(ID.DIALOG_LIST_BUTTON, False)
+
+        return True
         
     def Command(self, id, msg,):
-        self.Reset()
-        active_checkbox_list = []
-        name = ""
+
         if id == ID.DIALOG_FOLDER_BUTTON:
             # self.HandleFolderSelect()
-
-            self.Reset()
 
             path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
             if path == None:
@@ -391,34 +415,67 @@ class ReawoteMaterialDialog(gui.GeDialog):
             dir = os.listdir(path)
             
             # TODO zde vypsat slozky, ktere jsou obsazene v "path", idealne k nim rovnou priradit checkboxy
+
+            # Do proměnné uloží všechny složky, které začínají stejným názvem jako parent path (např. Kobe)
             same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
-            # folder_list = "\n".join(same_path_dirs)
-            # self.SetString(ID.DIALOG_FOLDER_LIST, folder_list)
+            
+
+            
             folder_dict = {}
+            # Projde všechny složky v proměnné same_path_dirs, kterou jsme si definovali a pro všechny složky v proměnné provede akce
             for folder in same_path_dirs:
                 folder_dict [folder] = True
                 # check box se pouze jmenuje stejne slozka, nereprezentuje ho
-                checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, 1, 1, folder)
-                name = os.path.basename(folder)
+                
+                foldername = os.path.basename(folder)
+
+                # Vytvoří checkbox
+                checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, 1, 1, foldername)
+
+                # checkbox.SetName(folder)
+
+                # name = os.path.basename(folder)
                 # checkbox = os.path.basename(name)
+
+                # Do předem vytvořenho listu přidá checkbox
                 checkbox_list.append(checkbox)
-                print(f"{folder} checkbox byl vytvoren a pridan do listu")
-                # print(checkbox)
+
+                # Vypsání pro kontrolu
+                print(f"{folder} checkbox byl vytvořen a přidán do listu")
+                print(checkbox)
+                print(folder)
+                self.Enable(ID.DIALOG_LIST_BUTTON, True)
+
 
         active_checkbox_list = []
-
-        if id == ID.DIALOG_LIST_BUTTON:
-            print("Active checkboxes:")
-            for checkbox in checkbox_list:
-                if self.GetBool(checkbox):
-                    active_checkbox_list.append(checkbox)
-                    print(checkbox)
-            
         
-            # folder_list = "\n".joMayin([f"{folder}: {checked}" for folder, checked in folder_dict.items()])
-            folder_list = []
-            # TODO nalezeni v path slozky, ktera se jmenuje jako checkbox a potom na ni provest dane operace
-            # TODO upravit spodni cast aby to sedelo na tutudu o radek up
+        # Pokud stiskne tlačítko Select materials
+        if id == ID.DIALOG_LIST_BUTTON:
+            print(checkbox_list)
+            print("Active checkboxes:")
+            # Pro všchny checkboxy provede následjící akce
+            for checkbox in checkbox_list:
+                # Pokud je checkbox označený (zaškrtlý)
+                if self.GetBool(checkbox):
+                    # Tak se přidá do předem vytvořeného listu
+                    active_checkbox_list.append(checkbox)
+                    # Print pro kontrolu
+                    print(checkbox)
+
+            if not active_checkbox_list:
+                self.SetError("No materials were selected.")
+            elif active_checkbox_list is not None:
+                self.Enable(ID.DIALOG_LOAD_BUTTON, True)
+                self.SetError("")
+                # TODO Zde bude probíhat for cyklus pro vyhledání složky a funkcí jako v HandleFolderSelect
+                # TODO uložit 4K 5K 6K 7K 8K 9K 10K 11K 12K 13K 14K 15K 16K folder jako truePath a na ni už udělat funkce jako předtím
+                for checkbox in active_checkbox_list:
+                    same_name_dir = os.path.join(path, checkbox)
+                    if os.path.exists(same_name_dir):
+                        print("Folder found")
+                    else:
+                        print("nenasel")
+                        
 
             return True
 
@@ -579,33 +636,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
 
     def HandleFolderSelect(self):
-        # self.Reset()
-
-        # path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
-        # if path == None:
-        #     return True
-        # try:
-        #     #python2
-        #     path = path.decode("utf-8")
-        # except: 
-        #     pass
-        # print(path)
-        # dir = os.listdir(path)
-        
-        # # TODO zde vypsat slozky, ktere jsou obsazene v "path", idealne k nim rovnou priradit checkboxy
-        # same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
-        # # folder_list = "\n".join(same_path_dirs)
-        # # self.SetString(ID.DIALOG_FOLDER_LIST, folder_list)
-        # folder_dict = {}
-        # for folder in same_path_dirs:
-        #     folder_dict [folder] = True
-        # # for folder, checked in folder_dict.items():
-        #     checked = True
-        #     # check box se pouze jmenuje stejne slozka, nereprezentuje ho
-        #     checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, int(checked), 1, folder)
-        #     checkbox_list.append(checkbox)
-        #     print(f"{folder} checkbox byl vytvoren a pridan do listu")
-        #     self.Enable(100017, True)
 
         # # folder_list = "\n".joMayin([f"{folder}: {checked}" for folder, checked in folder_dict.items()])
         folder_list = []
