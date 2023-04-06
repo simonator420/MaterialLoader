@@ -9,6 +9,7 @@ REAWOTE_PLUGIN_ID=1056421
 dialog = None
 
 checkbox_list = []
+same_path_dirs = []
 path = ""
 
 
@@ -427,8 +428,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
             targetFolder = None
             targetFolders = ["4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K","16K"]
             # Projde všechny složky v proměnné same_path_dirs, kterou jsme si definovali a pro všechny složky v proměnné provede akce
-            for folder in same_path_dirs:
-                folder_dict [folder] = True
+            for index, folder in enumerate(same_path_dirs):
+                folder_dict[folder] = True
 
                 checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, 1, 1, folder)
                 checkbox_list.append(checkbox)
@@ -444,22 +445,32 @@ class ReawoteMaterialDialog(gui.GeDialog):
                         print("Slozka s materialem byla nalezena v ceste " + targetFolder)
                     else:
                         ("Slozka s materialem se nenasla")
+                print(index)
                 print(" ")
                 self.Enable(ID.DIALOG_LIST_BUTTON, True)
 
         active_checkbox_list = []
         
         if id == ID.DIALOG_LIST_BUTTON:
+            path = self.GetString(ID.DIALOG_FOLDER_LIST)
+            dir = os.listdir(path)
+            same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
+            folder_dict = {}
+            for index, folder in enumerate(same_path_dirs):
+                folder_dict[folder] = True
             print(checkbox_list)
             print("Active checkboxes:")
             # Pro všchny checkboxy provede následjící akce
-            for checkbox in checkbox_list:
+            for index, checkbox in enumerate(checkbox_list):
                 # Pokud je checkbox označený (zaškrtlý)
                 if self.GetBool(checkbox):
                     # Tak se přidá do předem vytvořeného listu
-                    active_checkbox_list.append(checkbox)
+                    active_checkbox_list.append(index)
                     # Print pro kontrolu
+                    folder_name = same_path_dirs[index]
                     print(checkbox)
+                    print(index)
+                    print(folder_name)
 
 
             # if not active_checkbox_list:
