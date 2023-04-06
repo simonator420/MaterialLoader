@@ -350,14 +350,14 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         
         # self.AddStaticText(ID.DIALOG_FOLDER_LIST,  c4d.BFH_SCALEFIT, 2, 1, "", 0)
-        # self.AddEditText(ID.DIALOG_FOLDER_LIST,  c4d.BFH_SCALEFIT, inith=150, initw=50)
+        pathBox = self.AddEditText(ID.DIALOG_FOLDER_LIST,  c4d.BFH_SCALEFIT, inith=10, initw=50)
         cbAO = self.AddCheckbox(ID.DIALOG_MAP_AO_CB, c4d.BFH_SCALEFIT, 1, 1, "Include ambient occlusion (AO) maps")
         cbDispl = self.AddCheckbox(ID.DIALOG_MAP_DISPL_CB, c4d.BFH_SCALEFIT, 1, 1, "Include displacement maps")
         cb16bdispl = self.AddCheckbox(ID.DIALOG_MAP_16B_DISPL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit displacement maps (when available)")
         cb16bnormal = self.AddCheckbox(ID.DIALOG_MAP_16B_NORMAL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit normal maps (when available)")
         bLoad = self.AddButton(ID.DIALOG_LOAD_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Load material")
         strErr = self.AddStaticText(ID.DIALOG_ERROR, c4d.BFH_SCALEFIT, 64, 10, "", 0)
-        self.AddButton(ID.DIALOG_LIST_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Select materials")
+        selectMaterials = self.AddButton(ID.DIALOG_LIST_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Select materials")
         
         self.GroupEnd(ID.DIALOG_MAIN_GROUP)
         self.GroupEnd(ID.DIALOG_SCROLL_GROUP)
@@ -411,6 +411,9 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 path = path.decode("utf-8")
             except: 
                 pass
+
+            self.SetString(ID.DIALOG_FOLDER_LIST, path)
+
             print(path)
             dir = os.listdir(path)
             
@@ -418,34 +421,29 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
             # Do proměnné uloží všechny složky, které začínají stejným názvem jako parent path (např. Kobe)
             same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
-            
 
-            
             folder_dict = {}
             # Projde všechny složky v proměnné same_path_dirs, kterou jsme si definovali a pro všechny složky v proměnné provede akce
             for folder in same_path_dirs:
                 folder_dict [folder] = True
-                # check box se pouze jmenuje stejne slozka, nereprezentuje ho
-                
-                foldername = os.path.basename(folder)
 
                 # Vytvoří checkbox
-                checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, 1, 1, foldername)
-
-                # checkbox.SetName(folder)
-
-                # name = os.path.basename(folder)
-                # checkbox = os.path.basename(name)
 
                 # Do předem vytvořenho listu přidá checkbox
-                checkbox_list.append(checkbox)
+                checkbox_list.append(self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, 1, 1, folder))
 
                 # Vypsání pro kontrolu
                 print(f"{folder} checkbox byl vytvořen a přidán do listu")
-                print(checkbox)
-                print(folder)
-                self.Enable(ID.DIALOG_LIST_BUTTON, True)
 
+                folder_path = os.path.join(path, folder)
+                subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
+                if "4K" in subdirs:
+                    targetFolder = os.path.join(folder_path, "4K")
+                    print("Slozka s materialem byla nalezena v ceste " + targetFolder)
+                else:
+                    ("Slozka s materialem se nenasla")
+
+                self.Enable(ID.DIALOG_LIST_BUTTON, True)
 
         active_checkbox_list = []
         
@@ -462,19 +460,19 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     # Print pro kontrolu
                     print(checkbox)
 
-            if not active_checkbox_list:
-                self.SetError("No materials were selected.")
-            elif active_checkbox_list is not None:
-                self.Enable(ID.DIALOG_LOAD_BUTTON, True)
-                self.SetError("")
-                # TODO Zde bude probíhat for cyklus pro vyhledání složky a funkcí jako v HandleFolderSelect
-                # TODO uložit 4K 5K 6K 7K 8K 9K 10K 11K 12K 13K 14K 15K 16K folder jako truePath a na ni už udělat funkce jako předtím
-                for checkbox in active_checkbox_list:
-                    same_name_dir = os.path.join(path, checkbox)
-                    if os.path.exists(same_name_dir):
-                        print("Folder found")
-                    else:
-                        print("nenasel")
+            # if not active_checkbox_list:
+            #     self.SetError("No materials were selected.")
+            # elif active_checkbox_list is not None:
+            #     self.Enable(ID.DIALOG_LOAD_BUTTON, True)
+            #     self.SetError("")
+            #     # TODO Zde bude probíhat for cyklus pro vyhledání složky a funkcí jako v HandleFolderSelect
+            #     # TODO uložit 4K 5K 6K 7K 8K 9K 10K 11K 12K 13K 14K 15K 16K folder jako truePath a na ni už udělat funkce jako předtím
+            #     for checkbox in active_checkbox_list:
+            #         same_name_dir = os.path.join(path, checkbox)
+            #         if os.path.exists(same_name_dir):
+            #             print("Folder found")
+            #         else:
+            #             print("nenasel")
                         
 
             return True
