@@ -418,76 +418,105 @@ class ReawoteMaterialDialog(gui.GeDialog):
             print(path)
             dir = os.listdir(path)
             
-            # TODO zde vypsat slozky, ktere jsou obsazene v "path", idealne k nim rovnou priradit checkboxy
-
-            # Do proměnné uloží všechny složky, které začínají stejným názvem jako parent path (např. Kobe)
             same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
 
             folder_dict = {}
             checkbox_dict = {}
-            targetFolder = None
-            targetFolders = ["4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K","16K"]
-            # Projde všechny složky v proměnné same_path_dirs, kterou jsme si definovali a pro všechny složky v proměnné provede akce
+
             for index, folder in enumerate(same_path_dirs):
                 folder_dict[folder] = True
 
                 checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, 1, 1, folder)
                 checkbox_list.append(checkbox)
                 checkbox_dict[folder] = checkbox
-
                 print(f"{folder} checkbox byl vytvořen a přidán do listu")
-
-                folder_path = os.path.join(path, folder)
-                subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
-                for targetFolderName in targetFolders:
-                    if targetFolderName in subdirs:
-                        targetFolder = os.path.join(folder_path, targetFolderName)
-                        print("Slozka s materialem byla nalezena v ceste " + targetFolder)
-                    else:
-                        ("Slozka s materialem se nenasla")
+                
                 print(index)
                 print(" ")
                 self.Enable(ID.DIALOG_LIST_BUTTON, True)
+                self.Enable(ID.DIALOG_FOLDER_BUTTON, False)
 
         active_checkbox_list = []
         
         if id == ID.DIALOG_LIST_BUTTON:
             path = self.GetString(ID.DIALOG_FOLDER_LIST)
             dir = os.listdir(path)
+            targetFolder = None
+            targetFolders = ["4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
             folder_dict = {}
             for index, folder in enumerate(same_path_dirs):
                 folder_dict[folder] = True
             print(checkbox_list)
             print("Active checkboxes:")
-            # Pro všchny checkboxy provede následjící akce
             for index, checkbox in enumerate(checkbox_list):
-                # Pokud je checkbox označený (zaškrtlý)
                 if self.GetBool(checkbox):
-                    # Tak se přidá do předem vytvořeného listu
                     active_checkbox_list.append(index)
-                    # Print pro kontrolu
                     folder_name = same_path_dirs[index]
                     folder_path = os.path.join(path, folder_name)
                     # print(checkbox)
                     # print(index)
-                    print(folder_name)
                     # print(folder_path)
+                    print(folder_name)
+                    subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
+                    for targetFolderName in targetFolders:
+                        if targetFolderName in subdirs:
+                            targetFolder = os.path.join(folder_path, targetFolderName)
+                            print("Slozka s materialem byla nalezena v ceste " + targetFolder)
+                            dirPath = os.listdir(targetFolder)
+                            hasColor = False
+                            for file in dirPath:
+                                try: 
+                                    parts = file.split(".")[0].split("_")
+                                    manufacturer = parts[0]
+                                    productNumber = parts[1]
+                                    product = parts[2]
+                                    mapID = parts[3]
+                                    resolution = parts[4]
 
-            # if not active_checkbox_list:
-            #     self.SetError("No materials were selected.")
-            # elif active_checkbox_list is not None:
-            #     self.Enable(ID.DIALOG_LOAD_BUTTON, True)
-            #     self.SetError("")
-            #     # TODO Zde bude probíhat for cyklus pro vyhledání složky a funkcí jako v HandleFolderSelect
-            #     # TODO uložit 4K 5K 6K 7K 8K 9K 10K 11K 12K 13K 14K 15K 16K folder jako truePath a na ni už udělat funkce jako předtím
-            #     for checkbox in active_checkbox_list:
-            #         same_name_dir = os.path.join(path, checkbox)
-            #         if os.path.exists(same_name_dir):
-            #             print("Folder found")
-            #         else:
-            #             print("nenasel")
-                        
+                                    # check if there's a base texture (we are probably in a wrong folder otherwise)
+                                    if mapID == "DIFF" or mapID == "COLOR" or mapID == "COL":
+                                        hasColor = True
+                                    if mapID == "DISP16":
+                                        self.has16bDisp = True
+                                        self.hasDisp = True
+                                    if mapID == "DISP":
+                                        self.hasDisp = True
+                                    if mapID == "AO":
+                                        self.hasAO = True
+                                    if mapID == "IOR":
+                                        self.hasIor = True
+                                    if mapID == "NRM16":
+                                        self.has16bNormal = True
+                                except:
+                                    pass
+
+                            if self.hasAO:
+                                self.SetBool(ID.DIALOG_MAP_AO_CB, True)
+                                self.Enable(ID.DIALOG_MAP_AO_CB, True)
+
+                            if self.hasDisp:
+                                self.SetBool(ID.DIALOG_MAP_DISPL_CB, True)
+                                self.Enable(ID.DIALOG_MAP_DISPL_CB, True)
+
+                            if self.has16bDisp:
+                                self.SetBool(ID.DIALOG_MAP_16B_DISPL_CB, True)
+                                self.Enable(ID.DIALOG_MAP_16B_DISPL_CB, True)
+
+                            if self.has16bNormal:
+                                self.SetBool(ID.DIALOG_MAP_16B_NORMAL_CB, True)
+                                self.Enable(ID.DIALOG_MAP_16B_NORMAL_CB, True)
+
+                            if self.hasIor:
+                                self.SetBool(ID.DIALOG_MAP_IOR_CB, False)
+                                self.Enable(ID.DIALOG_MAP_IOR_CB, True)
+                            
+                            if hasColor:
+                                self.materialFolder = path
+                                self.Enable(ID.DIALOG_LOAD_BUTTON, True)
+                                self.SetError("")
+                            else:
+                                self.SetError("One or more folders do not contain the correct Reawote material.")
 
             return True
 
@@ -750,7 +779,7 @@ class ReawoteMaterialLoader(plugins.CommandData):
             dialog = ReawoteMaterialDialog()
 
     def Execute(self, doc):
-        dialog.Open(c4d.DLG_TYPE_ASYNC, REAWOTE_PLUGIN_ID, -1, -1, 400, 200)
+        dialog.Open(c4d.DLG_TYPE_ASYNC, REAWOTE_PLUGIN_ID, -1, -1, 400, 254)
         return True
         
     def CoreMessage(self, id, msg):
