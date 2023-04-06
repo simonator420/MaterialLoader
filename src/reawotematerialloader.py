@@ -423,31 +423,32 @@ class ReawoteMaterialDialog(gui.GeDialog):
             same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
 
             folder_dict = {}
+            checkbox_dict = {}
+            targetFolder = None
+            targetFolders = ["4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K","16K"]
             # Projde všechny složky v proměnné same_path_dirs, kterou jsme si definovali a pro všechny složky v proměnné provede akce
             for folder in same_path_dirs:
                 folder_dict [folder] = True
 
-                # Vytvoří checkbox
+                checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, 1, 1, folder)
+                checkbox_list.append(checkbox)
+                checkbox_dict[folder] = checkbox
 
-                # Do předem vytvořenho listu přidá checkbox
-                checkbox_list.append(self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, 1, 1, folder))
-
-                # Vypsání pro kontrolu
                 print(f"{folder} checkbox byl vytvořen a přidán do listu")
 
                 folder_path = os.path.join(path, folder)
                 subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
-                if "4K" in subdirs:
-                    targetFolder = os.path.join(folder_path, "4K")
-                    print("Slozka s materialem byla nalezena v ceste " + targetFolder)
-                else:
-                    ("Slozka s materialem se nenasla")
-
+                for targetFolderName in targetFolders:
+                    if targetFolderName in subdirs:
+                        targetFolder = os.path.join(folder_path, targetFolderName)
+                        print("Slozka s materialem byla nalezena v ceste " + targetFolder)
+                    else:
+                        ("Slozka s materialem se nenasla")
+                print(" ")
                 self.Enable(ID.DIALOG_LIST_BUTTON, True)
 
         active_checkbox_list = []
         
-        # Pokud stiskne tlačítko Select materials
         if id == ID.DIALOG_LIST_BUTTON:
             print(checkbox_list)
             print("Active checkboxes:")
@@ -459,6 +460,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     active_checkbox_list.append(checkbox)
                     # Print pro kontrolu
                     print(checkbox)
+
 
             # if not active_checkbox_list:
             #     self.SetError("No materials were selected.")
