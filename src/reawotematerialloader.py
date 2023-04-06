@@ -468,10 +468,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     active_checkbox_list.append(index)
                     # Print pro kontrolu
                     folder_name = same_path_dirs[index]
-                    print(checkbox)
-                    print(index)
+                    folder_path = os.path.join(path, folder_name)
+                    # print(checkbox)
+                    # print(index)
                     print(folder_name)
-
+                    # print(folder_path)
 
             # if not active_checkbox_list:
             #     self.SetError("No materials were selected.")
