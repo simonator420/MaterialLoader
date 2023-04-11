@@ -23,6 +23,7 @@ IDS_DIALOG_SCROLL_GROUP_TWO = 10016
 IDS_DIALOG_SECONDARY_GROUP = 10015
 IDS_DIALOG_LIST_CHECKBOX = 10011
 IDS_DIALOG_LIST_BUTTON = 10017
+IDS_DIALOG_SELECT_ALL_BUTTON = 10018
 IDS_DIALOG_FOLDER_LIST = 10013
 
 IDS_DIALOG_INCLUDE_AO = 10003
@@ -45,6 +46,7 @@ class ID():
     DIALOG_FOLDER_LIST = 100015
     DIALOG_LIST_BUTTON = 100017
     DIALOG_LIST_CHECKBOX = 100013
+    DIALOG_SELECT_ALL_BUTTON = 100018
 
     DIALOG_MAP_AO_CB = 100003
     DIALOG_MAP_DISPL_CB = 100004
@@ -347,16 +349,18 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.AddButton(ID.DIALOG_FOLDER_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Browse")
         self.GroupEnd()
 
-        
-        # self.AddStaticText(ID.DIALOG_FOLDER_LIST,  c4d.BFH_SCALEFIT, 2, 1, "", 0)
         pathBox = self.AddEditText(ID.DIALOG_FOLDER_LIST,  c4d.BFH_SCALEFIT, inith=10, initw=50)
-        cbAO = self.AddCheckbox(ID.DIALOG_MAP_AO_CB, c4d.BFH_SCALEFIT, 1, 1, "Include ambient occlusion (AO) maps")
-        cbDispl = self.AddCheckbox(ID.DIALOG_MAP_DISPL_CB, c4d.BFH_SCALEFIT, 1, 1, "Include displacement maps")
-        cb16bdispl = self.AddCheckbox(ID.DIALOG_MAP_16B_DISPL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit displacement maps (when available)")
-        cb16bnormal = self.AddCheckbox(ID.DIALOG_MAP_16B_NORMAL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit normal maps (when available)")
-        bLoad = self.AddButton(ID.DIALOG_LOAD_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Load material")
-        strErr = self.AddStaticText(ID.DIALOG_ERROR, c4d.BFH_SCALEFIT, 64, 10, "", 0)
+        # cbAO = self.AddCheckbox(ID.DIALOG_MAP_AO_CB, c4d.BFH_SCALEFIT, 1, 1, "Include ambient occlusion (AO) maps")
+        # cbDispl = self.AddCheckbox(ID.DIALOG_MAP_DISPL_CB, c4d.BFH_SCALEFIT, 1, 1, "Include displacement maps")
+        # cb16bdispl = self.AddCheckbox(ID.DIALOG_MAP_16B_DISPL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit displacement maps (when available)")
+        # cb16bnormal = self.AddCheckbox(ID.DIALOG_MAP_16B_NORMAL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit normal maps (when available)")
+        # bLoad = self.AddButton(ID.DIALOG_LOAD_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Load material")
+        # strErr = self.AddStaticText(ID.DIALOG_ERROR, c4d.BFH_SCALEFIT, 64, 10, "", 0)
         selectMaterials = self.AddButton(ID.DIALOG_LIST_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Load selected materials")
+
+        self.GroupBegin(ID.DIALOG_SCROLL_GROUP, c4d.BFH_SCALEFIT, 2, 1, "Material folder", 0, 10, 10)
+        self.AddButton(ID.DIALOG_SELECT_ALL_BUTTON, c4d.BFH_LEFT, 70, 5, "Select All")
+        self.GroupEnd()
         
         self.GroupEnd(ID.DIALOG_MAIN_GROUP)
         self.GroupEnd(ID.DIALOG_SCROLL_GROUP)
@@ -364,7 +368,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.Reset()
 
         color = c4d.Vector(1, 0, 0)
-        self.SetDefaultColor(strErr, c4d.COLOR_TEXT, color)
+        # self.SetDefaultColor(strErr, c4d.COLOR_TEXT, color)
 
         self.SetTimer(1000)
 
@@ -393,6 +397,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.Enable(ID.DIALOG_LOAD_BUTTON, False)
 
         self.Enable(ID.DIALOG_LIST_BUTTON, False)
+        self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, False)
 
         return True
         
@@ -429,15 +434,21 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 print(index)
                 print(" ")
                 self.Enable(ID.DIALOG_LIST_BUTTON, True)
+                self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
                 # self.Enable(ID.DIALOG_FOLDER_BUTTON, False)
 
         active_checkbox_list = []
         
+        if id == ID.DIALOG_SELECT_ALL_BUTTON:
+            for checkbox in checkbox_list:
+                self.SetBool(checkbox, True)
+
+        #TODO Select all, Hledani obecne materialu mimo reawote, hledani podle zkratek
         if id == ID.DIALOG_LIST_BUTTON:
             path = self.GetString(ID.DIALOG_FOLDER_LIST)
             dir = os.listdir(path)
             targetFolder = None
-            targetFolders = ["4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
+            targetFolders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
             folder_dict = {}
             for index, folder in enumerate(same_path_dirs):
@@ -481,6 +492,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         self.has16bNormal = True
                                 except:
                                     pass
+
                             if self.hasAO:
                                 self.SetBool(ID.DIALOG_MAP_AO_CB, True)
                             if self.hasDisp:
@@ -495,7 +507,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 self.materialFolder = path
                                 self.SetError("")
                             else:
-                                self.SetError("One or more folders do not contain the correct Reawote material.")                          
+                                self.SetError("One or more folders do not contain the correct Reawote material.")
+                                print(mat, " neobsahuje spravnou slozku")                        
                             if targetFolder is not None:
                                 loadAO = self.GetBool(ID.DIALOG_MAP_AO_CB)
                                 loadDispl = self.GetBool(ID.DIALOG_MAP_DISPL_CB)
@@ -788,7 +801,7 @@ class ReawoteMaterialLoader(plugins.CommandData):
             dialog = ReawoteMaterialDialog()
 
     def Execute(self, doc):
-        dialog.Open(c4d.DLG_TYPE_ASYNC, REAWOTE_PLUGIN_ID, -1, -1, 400, 254)
+        dialog.Open(c4d.DLG_TYPE_ASYNC, REAWOTE_PLUGIN_ID, -1, -1, 400, 190)
         return True
         
     def CoreMessage(self, id, msg):
