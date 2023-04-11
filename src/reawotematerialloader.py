@@ -13,8 +13,6 @@ same_path_dirs = []
 material_to_add = []
 path = ""
 
-
-# String table definitions
 IDS_REAWOTE_PBR_CONVERTER = 10000
 IDS_DIALOG_BROWSE = 10001
 IDS_DIALOG_TEXTURE_FOLDER = 10002
@@ -333,7 +331,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
     def __init__(self):
         super(ReawoteMaterialDialog, self).__init__()
         pass
-        #self.AddGadget(c4d.DIALOG_NOMENUBAR, 0)
 
     def CreateLayout(self):
 
@@ -359,7 +356,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         cb16bnormal = self.AddCheckbox(ID.DIALOG_MAP_16B_NORMAL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit normal maps (when available)")
         bLoad = self.AddButton(ID.DIALOG_LOAD_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Load material")
         strErr = self.AddStaticText(ID.DIALOG_ERROR, c4d.BFH_SCALEFIT, 64, 10, "", 0)
-        selectMaterials = self.AddButton(ID.DIALOG_LIST_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Select materials")
+        selectMaterials = self.AddButton(ID.DIALOG_LIST_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Load selected materials")
         
         self.GroupEnd(ID.DIALOG_MAIN_GROUP)
         self.GroupEnd(ID.DIALOG_SCROLL_GROUP)
@@ -402,8 +399,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
     def Command(self, id, msg,):
 
         if id == ID.DIALOG_FOLDER_BUTTON:
-            # self.HandleFolderSelect()
-
             path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
             if path == None:
                 return True
@@ -434,7 +429,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 print(index)
                 print(" ")
                 self.Enable(ID.DIALOG_LIST_BUTTON, True)
-                self.Enable(ID.DIALOG_FOLDER_BUTTON, False)
+                # self.Enable(ID.DIALOG_FOLDER_BUTTON, False)
 
         active_checkbox_list = []
         
@@ -454,9 +449,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     active_checkbox_list.append(index)
                     folder_name = same_path_dirs[index]
                     folder_path = os.path.join(path, folder_name)
-                    # print(checkbox)
-                    # print(index)
-                    # print(folder_path)
                     print(folder_name)
                     subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
                     for targetFolderName in targetFolders:
@@ -474,8 +466,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     product = parts[2]
                                     mapID = parts[3]
                                     resolution = parts[4]
-
-                                    # check if there's a base texture (we are probably in a wrong folder otherwise)
                                     if mapID == "DIFF" or mapID == "COLOR" or mapID == "COL":
                                         hasColor = True
                                     if mapID == "DISP16":
@@ -491,55 +481,37 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         self.has16bNormal = True
                                 except:
                                     pass
-
                             if self.hasAO:
                                 self.SetBool(ID.DIALOG_MAP_AO_CB, True)
-                                self.Enable(ID.DIALOG_MAP_AO_CB, True)
-
                             if self.hasDisp:
                                 self.SetBool(ID.DIALOG_MAP_DISPL_CB, True)
-                                self.Enable(ID.DIALOG_MAP_DISPL_CB, True)
-
                             if self.has16bDisp:
                                 self.SetBool(ID.DIALOG_MAP_16B_DISPL_CB, True)
-                                self.Enable(ID.DIALOG_MAP_16B_DISPL_CB, True)
-
                             if self.has16bNormal:
                                 self.SetBool(ID.DIALOG_MAP_16B_NORMAL_CB, True)
-                                self.Enable(ID.DIALOG_MAP_16B_NORMAL_CB, True)
-
                             if self.hasIor:
-                                self.SetBool(ID.DIALOG_MAP_IOR_CB, False)
-                                self.Enable(ID.DIALOG_MAP_IOR_CB, True)
-                            
+                                self.SetBool(ID.DIALOG_MAP_IOR_CB, False)                          
                             if hasColor:
                                 self.materialFolder = path
-                                self.Enable(ID.DIALOG_LOAD_BUTTON, True)
                                 self.SetError("")
                             else:
-                                self.SetError("One or more folders do not contain the correct Reawote material.")
-                            
+                                self.SetError("One or more folders do not contain the correct Reawote material.")                          
                             if targetFolder is not None:
-                                print("target foler neni prazdna!")
                                 loadAO = self.GetBool(ID.DIALOG_MAP_AO_CB)
                                 loadDispl = self.GetBool(ID.DIALOG_MAP_DISPL_CB)
                                 load16bdispl = self.GetBool(ID.DIALOG_MAP_16B_DISPL_CB)
                                 loadIor = self.GetBool(ID.DIALOG_MAP_IOR_CB)
-
                                 mat = c4d.BaseMaterial(ID.CORONA_STR_MATERIAL_PHYSICAL)
                                 mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_ROUGHNESS_MODE, ID.CORONA_PHYSICAL_MATERIAL_ROUGHNESS_MODE_GLOSSINESS, c4d.DESCFLAGS_SET_NONE)
                                 mat.SetParameter(ID.CORONA_MATERIAL_PREVIEWSIZE, ID.CORONA_MATERIAL_PREVIEWSIZE_1024, c4d.DESCFLAGS_SET_NONE)
                                 mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_BASE_IOR_VALUE, 1.56, c4d.DESCFLAGS_SET_NONE)
-
                                 fusionShader = None
-
                                 dir = os.listdir(targetFolder)
                                 for file in dir:
                                     fullPath = os.path.join(targetFolder, file)
                                     print("Type of fullpath: ", type(fullPath))
                                     parts = file.split(".")[0].split("_")
                                     mapID = parts[3]
-
                                     if mapID == "COL" or mapID == "COLOR":
                                         mat.SetName("_".join(parts[0:3]))
                                         if not loadAO:
@@ -627,30 +599,18 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         bitmap = c4d.BaseShader(c4d.Xbitmap)
                                         bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
                                         mat.InsertShader(bitmap)
-                                        mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_METALLIC_MODE_TEXTURE, bitmap, c4d.DESCFLAGS_SET_NONE)                                        
-                                    
+                                        mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_METALLIC_MODE_TEXTURE, bitmap, c4d.DESCFLAGS_SET_NONE)                                                                           
                                     doc = c4d.documents.GetActiveDocument()
                                     doc.StartUndo()
+                                    # nevim proc to je bile, ale funguje to takze save
                                     doc.InsertMaterial(mat)
                                     print("uz to proslo Insertem")
                                     doc.AddUndo(c4d.UNDOTYPE_NEW, mat)
                                     doc.EndUndo()
-                                    material_to_add.append(mat)
-                                    
+                                    material_to_add.append(mat)                                   
                                     self.SetString(ID.DIALOG_ERROR, "")
-                    
-            return True
-    
-        # TODO last part (snad)
-        if id == ID.DIALOG_LOAD_BUTTON:
-            # self.HandleLoadMaterial()
-            doc = c4d.documents.GetActiveDocument()
-            for mat in material_to_add:
-                doc.InsetMat(mat)
-            return True
-        
 
-        return False
+            return True
 
     def SetError(self, message):
         if not message:
@@ -792,82 +752,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.SetString(ID.DIALOG_ERROR, "")
 
         return True
-
-    def HandleLoadMaterial(self):
-        if self.LoadMaterial():
-            self.materialFolder = None
-            self.SetError(None)
-            self.SetListItems(None)
-        self.Reset()
-
-
-    def HandleFolderSelect(self):
-
-        # # folder_list = "\n".joMayin([f"{folder}: {checked}" for folder, checked in folder_dict.items()])
-        folder_list = []
-        # # TODO nalezeni v path slozky, ktera se jmenuje jako checkbox a potom na ni provest dane operace
-        # # TODO upravit spodni cast aby to sedelo na tutudu o radek up
-        
-        
-        for folder in folder_list:
-            if any(x in folder for x in ["4K", "8K", "16K"]):
-                if "4K" in folder or "8K" in folder or "16K" in folder:
-                    target_folder = os.path.join(path, folder)               
-                    hasColor = False
-                    # for file in dir:
-                    for file in target_folder:
-                        # try catch for non-texture files
-                        try: 
-                            parts = file.split(".")[0].split("_")
-                            manufacturer = parts[0]
-                            productNumber = parts[1]
-                            product = parts[2]
-                            mapID = parts[3]
-                            resolution = parts[4]
-
-                            # check if there's a base texture (we are probably in a wrong folder otherwise)
-                            if mapID == "DIFF" or mapID == "COLOR" or mapID == "COL":
-                                hasColor = True
-                            if mapID == "DISP16":
-                                self.has16bDisp = True
-                                self.hasDisp = True
-                            if mapID == "DISP":
-                                self.hasDisp = True
-                            if mapID == "AO":
-                                self.hasAO = True
-                            if mapID == "IOR":
-                                self.hasIor = True
-                            if mapID == "NRM16":
-                                self.has16bNormal = True
-                        except:
-                            pass
-
-                    if self.hasAO:
-                        self.SetBool(ID.DIALOG_MAP_AO_CB, True)
-                        self.Enable(ID.DIALOG_MAP_AO_CB, True)
-
-                    if self.hasDisp:
-                        self.SetBool(ID.DIALOG_MAP_DISPL_CB, True)
-                        self.Enable(ID.DIALOG_MAP_DISPL_CB, True)
-
-                    if self.has16bDisp:
-                        self.SetBool(ID.DIALOG_MAP_16B_DISPL_CB, True)
-                        self.Enable(ID.DIALOG_MAP_16B_DISPL_CB, True)
-
-                    if self.has16bNormal:
-                        self.SetBool(ID.DIALOG_MAP_16B_NORMAL_CB, True)
-                        self.Enable(ID.DIALOG_MAP_16B_NORMAL_CB, True)
-
-                    if self.hasIor:
-                        self.SetBool(ID.DIALOG_MAP_IOR_CB, False)
-                        self.Enable(ID.DIALOG_MAP_IOR_CB, True)
-                    
-                    if hasColor:
-                        self.materialFolder = path
-                        self.Enable(ID.DIALOG_LOAD_BUTTON, True)
-                        self.SetError("")
-                    else:
-                        self.SetError("This folder does not contain a valid Reawote material")
 
     def Reset(self):
         self.materialFolder = None
