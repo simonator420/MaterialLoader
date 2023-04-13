@@ -350,12 +350,12 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.GroupEnd()
 
         pathBox = self.AddEditText(ID.DIALOG_FOLDER_LIST,  c4d.BFH_SCALEFIT, inith=10, initw=50)
-        # cbAO = self.AddCheckbox(ID.DIALOG_MAP_AO_CB, c4d.BFH_SCALEFIT, 1, 1, "Include ambient occlusion (AO) maps")
-        # cbDispl = self.AddCheckbox(ID.DIALOG_MAP_DISPL_CB, c4d.BFH_SCALEFIT, 1, 1, "Include displacement maps")
-        # cb16bdispl = self.AddCheckbox(ID.DIALOG_MAP_16B_DISPL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit displacement maps (when available)")
-        # cb16bnormal = self.AddCheckbox(ID.DIALOG_MAP_16B_NORMAL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit normal maps (when available)")
+        cbAO = self.AddCheckbox(ID.DIALOG_MAP_AO_CB, c4d.BFH_SCALEFIT, 1, 1, "Include ambient occlusion (AO) maps")
+        cbDispl = self.AddCheckbox(ID.DIALOG_MAP_DISPL_CB, c4d.BFH_SCALEFIT, 1, 1, "Include displacement maps")
+        cb16bdispl = self.AddCheckbox(ID.DIALOG_MAP_16B_DISPL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit displacement maps (when available)")
+        cb16bnormal = self.AddCheckbox(ID.DIALOG_MAP_16B_NORMAL_CB, c4d.BFH_SCALEFIT, 1, 1, "Use 16 bit normal maps (when available)")
         # bLoad = self.AddButton(ID.DIALOG_LOAD_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Load material")
-        # strErr = self.AddStaticText(ID.DIALOG_ERROR, c4d.BFH_SCALEFIT, 64, 10, "", 0)
+        strErr = self.AddStaticText(ID.DIALOG_ERROR, c4d.BFH_SCALEFIT, 64, 10, "", 0)
         selectMaterials = self.AddButton(ID.DIALOG_LIST_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Load selected materials")
 
         self.GroupBegin(ID.DIALOG_SCROLL_GROUP, c4d.BFH_SCALEFIT, 2, 1, "Material folder", 0, 10, 10)
@@ -400,10 +400,21 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, False)
 
         return True
+   
+    def sort_materials():
+        doc = c4d.documents.GetActiveDocument()
+        mat_list = doc.GetMaterials()
+        mat_list.Sort(key=lambda mat: mat.GetName())
+        doc.SetMaterials(mat_list)
+        c4d.EventAdd() 
         
     def Command(self, id, msg,):
 
+        # pokud se klikne na Browse button
         if id == ID.DIALOG_FOLDER_BUTTON:
+            
+
+            # cesta do slozky (napr. Kobe se ulozi do path)
             path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
             if path == None:
                 return True
@@ -412,64 +423,40 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 path = path.decode("utf-8")
             except: 
                 pass
-
+            
+            # TextBox se vyplni cestou do vybrane slozky
             self.SetString(ID.DIALOG_FOLDER_LIST, path)
 
             print(path)
+            # ulozeni vsech souboru a slozek v ceste do slozky
             dir = os.listdir(path)
             
+            # nalezeni slozky se stejnym nazvem jako je parent folder
             same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
 
             folder_dict = {}
             checkbox_dict = {}
-
-            for index, folder in enumerate(same_path_dirs):
+            targetFolders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
+            # pro vsechny slozky ktere maji stejny nazev jako parent folder
+            for index, folder in enumerate(sorted(same_path_dirs)):
+                folder_path = os.path.join(path, folder)
+                subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
                 folder_dict[folder] = True
 
+                # pridani checkboxu, ktery ma stejny nazev jako slozka, ktera je prave prochazena
                 checkbox = self.AddCheckbox(ID.DIALOG_LIST_CHECKBOX, c4d.BFH_SCALEFIT, 1, 1, folder)
+                # pridani checkboxu do seznamu se vsemi checkboxy
                 checkbox_list.append(checkbox)
                 checkbox_dict[folder] = checkbox
                 print(f"{folder} checkbox byl vytvořen a přidán do listu")
-                
                 print(index)
                 print(" ")
-                self.Enable(ID.DIALOG_LIST_BUTTON, True)
-                self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
-                # self.Enable(ID.DIALOG_FOLDER_BUTTON, False)
-
-        active_checkbox_list = []
-        
-        if id == ID.DIALOG_SELECT_ALL_BUTTON:
-            for checkbox in checkbox_list:
-                self.SetBool(checkbox, True)
-
-        #TODO Select all, Hledani obecne materialu mimo reawote, hledani podle zkratek
-        if id == ID.DIALOG_LIST_BUTTON:
-            path = self.GetString(ID.DIALOG_FOLDER_LIST)
-            dir = os.listdir(path)
-            targetFolder = None
-            targetFolders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
-            same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
-            folder_dict = {}
-            for index, folder in enumerate(same_path_dirs):
-                folder_dict[folder] = True
-            print(checkbox_list)
-            print("Active checkboxes:")
-            for index, checkbox in enumerate(checkbox_list):
-                if self.GetBool(checkbox):
-                    active_checkbox_list.append(index)
-                    folder_name = same_path_dirs[index]
-                    folder_path = os.path.join(path, folder_name)
-                    print(folder_name)
-                    subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
-                    for targetFolderName in targetFolders:
-                        if targetFolderName in subdirs:
-                            # slozka s 4K, 5K, atd...
-                            targetFolder = os.path.join(folder_path, targetFolderName)
-                            print("Slozka s materialem byla nalezena v ceste " + targetFolder)
-                            dirPath = os.listdir(targetFolder)
-                            hasColor = False
-                            for file in dirPath:
+                for targetFolderName in targetFolders:
+                    if targetFolderName in subdirs:
+                        targetFolder = os.path.join(folder_path, targetFolderName)
+                        dirPath = os.listdir(targetFolder)
+                        hasColor = False
+                        for file in dirPath:
                                 try: 
                                     parts = file.split(".")[0].split("_")
                                     manufacturer = parts[0]
@@ -492,37 +479,158 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         self.has16bNormal = True
                                 except:
                                     pass
+                        if self.hasAO:
+                            self.SetBool(ID.DIALOG_MAP_AO_CB, True)
+                            self.Enable(ID.DIALOG_MAP_AO_CB, True)
+                        if self.hasDisp:
+                            self.SetBool(ID.DIALOG_MAP_DISPL_CB, True)
+                            self.Enable(ID.DIALOG_MAP_DISPL_CB, True)
+                        if self.has16bDisp:
+                            self.SetBool(ID.DIALOG_MAP_16B_DISPL_CB, True)
+                            self.Enable(ID.DIALOG_MAP_16B_DISPL_CB, True)
+                        if self.has16bNormal:
+                            self.SetBool(ID.DIALOG_MAP_16B_NORMAL_CB, True)
+                            self.Enable(ID.DIALOG_MAP_16B_NORMAL_CB, True)
+                        if self.hasIor:
+                            self.SetBool(ID.DIALOG_MAP_IOR_CB, False)
+                            self.Enable(ID.DIALOG_MAP_IOR_CB, True)
+                        if hasColor:
+                            self.materialFolder = path
+                            self.Enable(ID.DIALOG_LOAD_BUTTON, True)
+                            self.SetError("")
+                        else:
+                            self.SetError("One or more folders do not contain the correct Reawote material.")
+                            print(mat, " neobsahuje spravnou slozku")
 
-                            if self.hasAO:
-                                self.SetBool(ID.DIALOG_MAP_AO_CB, True)
-                            if self.hasDisp:
-                                self.SetBool(ID.DIALOG_MAP_DISPL_CB, True)
-                            if self.has16bDisp:
-                                self.SetBool(ID.DIALOG_MAP_16B_DISPL_CB, True)
-                            if self.has16bNormal:
-                                self.SetBool(ID.DIALOG_MAP_16B_NORMAL_CB, True)
-                            if self.hasIor:
-                                self.SetBool(ID.DIALOG_MAP_IOR_CB, False)                          
-                            if hasColor:
-                                self.materialFolder = path
-                                self.SetError("")
-                            else:
-                                self.SetError("One or more folders do not contain the correct Reawote material.")
-                                print(mat, " neobsahuje spravnou slozku")                        
+
+
+                # povoli se klikani na Load Selected Materials
+                self.Enable(ID.DIALOG_LIST_BUTTON, True)
+                # povoli se klikani na Select All
+                self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
+
+                # self.Enable(ID.DIALOG_FOLDER_BUTTON, False)
+
+        active_checkbox_list = []
+
+        # pokud se klikne Select All button        
+        if id == ID.DIALOG_SELECT_ALL_BUTTON:
+            # tak se vsechny checkboxy zaskrtnou
+            for checkbox in checkbox_list:
+                self.SetBool(checkbox, True)
+
+        #TODO Select all, Hledani obecne materialu mimo reawote, hledani podle zkratek
+
+        # Pokud se klikne na Load Selected Materials
+        if id == ID.DIALOG_LIST_BUTTON:
+            # tak se do path ulozi cesta ktera je ulozena v CheckBoxu
+            path = self.GetString(ID.DIALOG_FOLDER_LIST)
+            # do dir se ulozi vsechny soubory ve slozce
+            dir = os.listdir(path)
+            targetFolder = None
+            # ulozeni vsech slozek, ktere obsahuji materialy
+            targetFolders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
+            # nalezeni slozky se stejnym nazvem jako je parent folder
+            same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
+            same_path_dirs = sorted(same_path_dirs)
+            folder_dict = {}
+            # pro vsechny slozky, ktere jsou ulozeny v listu se slozkami se stejnym nazvem
+            for index, folder in enumerate(same_path_dirs):
+                folder_dict[folder] = True
+            # print(checkbox_list)
+            print("Active checkboxes:")
+            # projde vsechny checkboxy, ktere jsou ulozeny v listu
+            for index, checkbox in enumerate(checkbox_list):
+                # pokud je checkobox zaskrtly
+                if self.GetBool(checkbox):
+                    # pride se do listu s aktivnimi checkboxy
+                    active_checkbox_list.append(index)
+                    # zde se ulozi slozka, ktera ma stejny index jako checkbox
+                    # musi se to vyresit takhle, protoze checkbox sam o sobe nema stejny nazev jako slozka, index ano
+                    folder_name = same_path_dirs[index]
+                    # ulozeni slozky, ktera ma stejny nazev jako text u daneho checkboxu
+                    folder_path = os.path.join(path, folder_name)
+                    print(folder_name)
+                    subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
+                    # pro vsechny slozky, ktere obsahuji material (napr 4K, 5K, atd...)
+                    for targetFolderName in targetFolders:
+                        # pokud je slozka 4K, 5K, atd... v te kterou prochazime
+                        if targetFolderName in subdirs:
+                            # cesta do slozky s 4K, 5K, atd...
+                            targetFolder = os.path.join(folder_path, targetFolderName)
+                            print("Slozka s materialem byla nalezena v ceste " + targetFolder)
+                            # ulozeni vsech bitmapa ve slozce 4K, 5K, atd...
+                            dirPath = os.listdir(targetFolder)
+                            hasColor = False
+                            # pro kazdou bitmapu ve slozce
+                            # for file in dirPath:
+                            #     try: 
+                            #         parts = file.split(".")[0].split("_")
+                            #         manufacturer = parts[0]
+                            #         productNumber = parts[1]
+                            #         product = parts[2]
+                            #         mapID = parts[3]
+                            #         resolution = parts[4]
+                            #         if mapID == "DIFF" or mapID == "COLOR" or mapID == "COL":
+                            #             hasColor = True
+                            #         if mapID == "DISP16":
+                            #             self.has16bDisp = True
+                            #             self.hasDisp = True
+                            #         if mapID == "DISP":
+                            #             self.hasDisp = True
+                            #         if mapID == "AO":
+                            #             self.hasAO = True
+                            #         if mapID == "IOR":
+                            #             self.hasIor = True
+                            #         if mapID == "NRM16":
+                            #             self.has16bNormal = True
+                            #     except:
+                            #         pass
+
+                            # if self.hasAO:
+                            #     self.SetBool(ID.DIALOG_MAP_AO_CB, True)
+                            #     self.Enable(ID.DIALOG_MAP_AO_CB, True)
+
+                            # if self.hasDisp:
+                            #     self.SetBool(ID.DIALOG_MAP_DISPL_CB, True)
+                            #     self.Enable(ID.DIALOG_MAP_DISPL_CB, True)
+
+                            # if self.has16bDisp:
+                            #     self.SetBool(ID.DIALOG_MAP_16B_DISPL_CB, True)
+                            #     self.Enable(ID.DIALOG_MAP_16B_DISPL_CB, True)
+
+                            # if self.has16bNormal:
+                            #     self.SetBool(ID.DIALOG_MAP_16B_NORMAL_CB, True)
+                            #     self.Enable(ID.DIALOG_MAP_16B_NORMAL_CB, True)
+
+                            # if self.hasIor:
+                            #     self.SetBool(ID.DIALOG_MAP_IOR_CB, False)
+                            #     self.Enable(ID.DIALOG_MAP_IOR_CB, True)
+                            
+                            # if hasColor:
+                            #     self.materialFolder = path
+                            #     self.Enable(ID.DIALOG_LOAD_BUTTON, True)
+                            #     self.SetError("")
+                            # else:
+                            #     self.SetError("One or more folders do not contain the correct Reawote materialssssss.")
+                            #     print(mat, " neobsahuje spravnou slozku")                        
                             if targetFolder is not None:
                                 loadAO = self.GetBool(ID.DIALOG_MAP_AO_CB)
                                 loadDispl = self.GetBool(ID.DIALOG_MAP_DISPL_CB)
                                 load16bdispl = self.GetBool(ID.DIALOG_MAP_16B_DISPL_CB)
                                 loadIor = self.GetBool(ID.DIALOG_MAP_IOR_CB)
+
                                 mat = c4d.BaseMaterial(ID.CORONA_STR_MATERIAL_PHYSICAL)
                                 mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_ROUGHNESS_MODE, ID.CORONA_PHYSICAL_MATERIAL_ROUGHNESS_MODE_GLOSSINESS, c4d.DESCFLAGS_SET_NONE)
                                 mat.SetParameter(ID.CORONA_MATERIAL_PREVIEWSIZE, ID.CORONA_MATERIAL_PREVIEWSIZE_1024, c4d.DESCFLAGS_SET_NONE)
                                 mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_BASE_IOR_VALUE, 1.56, c4d.DESCFLAGS_SET_NONE)
+
                                 fusionShader = None
+
                                 dir = os.listdir(targetFolder)
                                 for file in dir:
                                     fullPath = os.path.join(targetFolder, file)
-                                    print("Type of fullpath: ", type(fullPath))
+                                    # print("Type of fullpath: ", type(fullPath))
                                     parts = file.split(".")[0].split("_")
                                     mapID = parts[3]
                                     if mapID == "COL" or mapID == "COLOR":
@@ -612,16 +720,18 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         bitmap = c4d.BaseShader(c4d.Xbitmap)
                                         bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
                                         mat.InsertShader(bitmap)
-                                        mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_METALLIC_MODE_TEXTURE, bitmap, c4d.DESCFLAGS_SET_NONE)                                                                           
+                                        mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_METALLIC_MODE_TEXTURE, bitmap, c4d.DESCFLAGS_SET_NONE)
+
                                     doc = c4d.documents.GetActiveDocument()
                                     doc.StartUndo()
                                     # nevim proc to je bile, ale funguje to takze save
                                     doc.InsertMaterial(mat)
-                                    print("uz to proslo Insertem")
+                                    # print("uz to proslo Insertem")
                                     doc.AddUndo(c4d.UNDOTYPE_NEW, mat)
                                     doc.EndUndo()
                                     material_to_add.append(mat)                                   
                                     self.SetString(ID.DIALOG_ERROR, "")
+            c4d.EventAdd()
 
             return True
 
@@ -801,7 +911,7 @@ class ReawoteMaterialLoader(plugins.CommandData):
             dialog = ReawoteMaterialDialog()
 
     def Execute(self, doc):
-        dialog.Open(c4d.DLG_TYPE_ASYNC, REAWOTE_PLUGIN_ID, -1, -1, 400, 180)
+        dialog.Open(c4d.DLG_TYPE_ASYNC, REAWOTE_PLUGIN_ID, -1, -1, 400, 255)
         return True
         
     def CoreMessage(self, id, msg):
