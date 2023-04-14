@@ -648,7 +648,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             self.SetError("")
                         else:
                             self.SetError("One or more folders do not contain the correct Reawote material.")
-                            print(mat, " neobsahuje spravnou slozku")
+                            print(folder, " neobsahuje spravnou slozku")
 
                 # povoli se klikani na Load Selected Materials
                 self.Enable(ID.DIALOG_LIST_BUTTON, True)
