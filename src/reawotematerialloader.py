@@ -51,6 +51,7 @@ class ID():
     DIALOG_LIST_BUTTON = 100017
     DIALOG_LIST_CHECKBOX = 100013
     DIALOG_SELECT_ALL_BUTTON = 100018
+    DIALOG_REFRESH_ALL_BUTTON = 100019
 
     DIALOG_MAP_AO_CB = 100003
     DIALOG_MAP_DISPL_CB = 100004
@@ -562,6 +563,14 @@ class ReawoteMaterialDialog(gui.GeDialog):
     def Command(self, id, msg,):
 
         if id == ID.DIALOG_FOLDER_BUTTON:
+            pom = 0
+            #for tex in(self._listView.listOfTexture):
+            while len(self._listView.listOfTexture) > 0:
+                tex = self._listView.listOfTexture[0]
+                self._listView.listOfTexture.remove(tex)
+            self._treegui.Refresh()
+
+
             path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
             if path == None:
                 return True
@@ -962,6 +971,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
         return True
 
     def Reset(self):
+        for item in self._listView.listOfTexture:
+                self._listView.listOfTexture.pop(item)
         self.materialFolder = None
     
         self.has16bDisp = False
