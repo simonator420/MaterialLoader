@@ -13,6 +13,7 @@ same_path_dirs = []
 material_to_add = []
 path_lists = []
 path_list = []
+mapID_list = []
 path = ""
 
 ID_CHECKBOX = 999
@@ -66,8 +67,6 @@ class ID():
     DIALOG_GROUP_RENDERER = 100023
     DIALOG_RENDERER_TEXT = 100024
     DIALOG_RENDERER_COMBOBOX = 100025
-
-    
 
     # Todo: generate this with swig
     PLUGINID_CORONA4D_MATERIAL = 1032100
@@ -901,6 +900,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
             folderPath = ""
             targetFolders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             folder_dict = {}
+            number = 1
             for index, checkbox in enumerate(checkbox_list):
                 if checkbox.IsSelected:
                     active_checkbox_list.append(index)
@@ -936,6 +936,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     print("Type of fullpath: ", type(fullPath))
                                     parts = file.split(".")[0].split("_")
                                     mapID = parts[3]
+                                    print(mapID)
+                                    mapID_list.append(mapID)
                                     if mapID == "COL" or mapID == "COLOR":
                                         mat.SetName("_".join(parts[0:3]))
                                         if not loadAO:
@@ -965,24 +967,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_BASE_BUMPMAPPING_ENABLE, True, c4d.DESCFLAGS_SET_NONE)
                                         mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_BASE_BUMPMAPPING_VALUE, 1.0, c4d.DESCFLAGS_SET_NONE)
                                         mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_BASE_BUMPMAPPING_TEXTURE, texture, c4d.DESCFLAGS_SET_NONE)
-                                    elif loadDispl and load16bdispl and mapID == "DISP16":
-                                        if mapID == "DISP16":
-                                            bitmap = c4d.BaseShader(c4d.Xbitmap)
-                                            bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
-                                            mat.InsertShader(bitmap)
-                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT, True, c4d.DESCFLAGS_SET_NONE)
-                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_TEXTURE, bitmap, c4d.DESCFLAGS_SET_NONE)
-                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MIN_LEVEL, 0, c4d.DESCFLAGS_SET_NONE)
-                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MAX_LEVEL, 1, c4d.DESCFLAGS_SET_NONE)
-                                        elif mapID == "DISP":
-                                            bitmap = c4d.BaseShader(c4d.Xbitmap)
-                                            bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
-                                            mat.InsertShader(bitmap)
-                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT, True, c4d.DESCFLAGS_SET_NONE)
-                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_TEXTURE, bitmap, c4d.DESCFLAGS_SET_NONE)
-                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MIN_LEVEL, 0, c4d.DESCFLAGS_SET_NONE)
-                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MAX_LEVEL, 1, c4d.DESCFLAGS_SET_NONE)
-                                    elif loadDispl and mapID == "DISP":
+                                    elif loadDispl and mapID == "DISP" and not load16bdispl:
                                         bitmap = c4d.BaseShader(c4d.Xbitmap)
                                         bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
                                         mat.InsertShader(bitmap)
@@ -1041,6 +1026,26 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
                                         mat.InsertShader(bitmap)
                                         mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_METALLIC_MODE_TEXTURE, bitmap, c4d.DESCFLAGS_SET_NONE)
+                                    elif loadDispl and load16bdispl and mapID == "DISP16" or mapID == "DISP":
+                                        if mapID == "DISP16":
+                                            print("Proslo DISP16")
+                                            bitmap = c4d.BaseShader(c4d.Xbitmap)
+                                            bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
+                                            mat.InsertShader(bitmap)
+                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT, True, c4d.DESCFLAGS_SET_NONE)
+                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_TEXTURE, bitmap, c4d.DESCFLAGS_SET_NONE)
+                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MIN_LEVEL, 0, c4d.DESCFLAGS_SET_NONE)
+                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MAX_LEVEL, 1, c4d.DESCFLAGS_SET_NONE)
+                                            number +=1
+                                        elif mapID == "DISP" and number == 1:
+                                            print("Proslo DISP")
+                                            bitmap = c4d.BaseShader(c4d.Xbitmap)
+                                            bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
+                                            mat.InsertShader(bitmap)
+                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT, True, c4d.DESCFLAGS_SET_NONE)
+                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_TEXTURE, bitmap, c4d.DESCFLAGS_SET_NONE)
+                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MIN_LEVEL, 0, c4d.DESCFLAGS_SET_NONE)
+                                            mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MAX_LEVEL, 1, c4d.DESCFLAGS_SET_NONE)                                    
                                     doc = c4d.documents.GetActiveDocument()
                                     doc.StartUndo()
                                     doc.InsertMaterial(mat)
