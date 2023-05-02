@@ -2,7 +2,7 @@ import os
 import sys
 
 import c4d
-from c4d import plugins, gui, storage, documents
+from c4d import plugins, gui
 
 REAWOTE_PLUGIN_ID=1056421
 
@@ -371,7 +371,7 @@ class ListView(c4d.gui.TreeViewFunctions):
         return False
  
     def GetColumnWidth(self, root, userdata, obj, col, area):
-        return 80  # All have the same initial width
+        return 80
  
     def IsMoveColAllowed(self, root, userdata, lColID):
         return True
@@ -483,8 +483,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         self.GroupBegin(ID.DIALOG_GROUP_RENDERER,  c4d.BFH_SCALEFIT, 2, 1, "Renderer", 0, 10, 10)
         self.AddStaticText(ID.DIALOG_RENDERER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Select Renderer", 0)
-        self.AddComboBox(ID.DIALOG_RENDERER_COMBOBOX, c4d.BFH_SCALEFIT, inith=10, initw=50)
+        renderers = self.AddComboBox(ID.DIALOG_RENDERER_COMBOBOX, c4d.BFH_SCALEFIT, inith=10, initw=50)
         self.GroupEnd()
+
+        
 
         self.AddEditText(ID.DIALOG_FOLDER_LIST,  c4d.BFH_SCALEFIT, inith=10, initw=50)
         self.AddCheckbox(ID.DIALOG_MAP_AO_CB, c4d.BFH_SCALEFIT, 1, 1, "Include ambient occlusion (AO) maps")
@@ -527,6 +529,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         # self.SetDefaultColor(strErr, c4d.COLOR_TEXT, color)
 
         self.SetTimer(1000)
+        
 
         return True
     
@@ -561,22 +564,23 @@ class ReawoteMaterialDialog(gui.GeDialog):
         layout = c4d.BaseContainer()
         layout.SetLong(ID_CHECKBOX, c4d.LV_CHECKBOX)
         layout.SetLong(ID_NAME, c4d.LV_TREE)
-        # layout.SetLong(ID_OTHER, c4d.LV_USER)
         self._treegui.SetLayout(3, layout)
  
-        # Set the header titles.
         self._treegui.SetHeaderText(ID_CHECKBOX, "Check")
         self._treegui.SetHeaderText(ID_NAME, "Name")
         self._treegui.SetHeaderText(ID_OTHER, "Other")
         self._treegui.Refresh()
  
-        # Set TreeViewFunctions instance used by our CUSTOMGUI_TREEVIEW
         self._treegui.SetRoot(self._treegui, self._listView, None)
         
         while len(self._listView.listOfTexture) > 0:
             tex = self._listView.listOfTexture[0]
             self._listView.listOfTexture.remove(tex)
         self._treegui.Refresh()
+
+        child = c4d.BaseContainer()
+        child.SetString(1, "Nečum")
+        self.AddChild(ID.DIALOG_RENDERER_COMBOBOX, 123132133, "Nečum")
 
         return True
     
@@ -608,10 +612,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
             self._treegui.Refresh()
 
             path_lists.append(path)
-            # TextBox se vyplni cestou do vybrane slozky
             self.SetString(ID.DIALOG_FOLDER_LIST, path)
             print(path)
-            # ulozeni vsech souboru a slozek v ceste do slozky
             dir = os.listdir(path)
             targetFolders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             same_path_dirs = []
@@ -620,7 +622,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 for dir in dirs:
                     if dir in targetFolders:
                         same_path_dirs.append(os.path.join(root, dir))
-            # slozky s 8K, 16K, atd...
             print("Tohle jsou same_path_dirs: ", same_path_dirs)
 
             for index, folder in enumerate(sorted(same_path_dirs)):
@@ -689,17 +690,13 @@ class ReawoteMaterialDialog(gui.GeDialog):
                         self.SetError("")
                     # else:
                     #     self.SetError("One or more folders do not contain the correct Reawote material.")
-                    #     print(folder, " neobsahuje spravnou slozku")
-                # povoli se klikani na Load Selected Materials
                 self.Enable(ID.DIALOG_LIST_BUTTON, True)
-                # povoli se klikani na Select All
                 self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
                 self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
                 self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, True)
                 self.Enable(ID.DIALOG_CLEAN_BUTTON, True)
             active_checkbox_list = []
 
-        # pokud se klikne Select All button        
         if id == ID.DIALOG_SELECT_ALL_BUTTON:
             for item in checkbox_list:
                 item.Select()
@@ -709,10 +706,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
             path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
             path_lists.append(path)
             print(path_lists)
-            # TextBox se vyplni cestou do vybrane slozky
             self.SetString(ID.DIALOG_FOLDER_LIST, path)
             print(path)
-            # ulozeni vsech souboru a slozek v ceste do slozky
             dir = os.listdir(path)
             targetFolders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             same_path_dirs = []
@@ -722,7 +717,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 for dir in dirs:
                     if dir in targetFolders:
                         same_path_dirs.append(os.path.join(root, dir))
-            # slozky s 8K, 16K, atd...
             print("Tohle jsou same_path_dirs: ", same_path_dirs)
 
             for index, folder in enumerate(sorted(same_path_dirs)):
@@ -792,9 +786,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     else:
                         self.SetError("One or more folders do not contain the correct Reawote material.")
                         print(folder, " neobsahuje spravnou slozku")
-                # povoli se klikani na Load Selected Materials
                 self.Enable(ID.DIALOG_LIST_BUTTON, True)
-                # povoli se klikani na Select All
                 self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
                 self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
                 self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, True)
@@ -806,9 +798,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 tex = self._listView.listOfTexture[0]
                 self._listView.listOfTexture.remove(tex)
             self._treegui.Refresh()
-            # TextBox se vyplni cestou do vybrane slozky
             for path in path_lists:
-            # ulozeni vsech souboru a slozek v ceste do slozky
                 dir = os.listdir(path)
                 targetFolders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
                 same_path_dirs = []
@@ -817,9 +807,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     for dir in dirs:
                         if dir in targetFolders:
                             same_path_dirs.append(os.path.join(root, dir))
-                # slozky s 8K, 16K, atd...
                 print("Tohle jsou same_path_dirs: ", same_path_dirs)
-
                 for index, folder in enumerate(sorted(same_path_dirs)):
                     files = os.listdir(folder)
                     if files:
@@ -887,17 +875,13 @@ class ReawoteMaterialDialog(gui.GeDialog):
                         else:
                             self.SetError("One or more folders do not contain the correct Reawote material.")
                             print(folder, " neobsahuje spravnou slozku")
-                    # povoli se klikani na Load Selected Materials
                     self.Enable(ID.DIALOG_LIST_BUTTON, True)
-                    # povoli se klikani na Select All
                     self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
                     self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
                     self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, True)
                     self.Enable(ID.DIALOG_CLEAN_BUTTON, True)
                 active_checkbox_list = []
                 self._treegui.Refresh()
-
-        #TODO Select all, Hledani obecne materialu mimo reawote, hledani podle zkratek
         
         if id == ID.DIALOG_CLEAN_BUTTON:
             while len(self._listView.listOfTexture) > 0:
@@ -923,22 +907,12 @@ class ReawoteMaterialDialog(gui.GeDialog):
             folder_dict = {}
             for index, checkbox in enumerate(checkbox_list):
                 if checkbox.IsSelected:
+                    self.SetError("")
                     active_checkbox_list.append(index)
-                    # zde se ulozi slozka, ktera ma stejny index jako checkbox
                     folder_path = path_list[index]
-                    print("Tohle je folder path ty mrdko", folder_path)
-                    #subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
-                    # pro vsechny slozky, ktere obsahuji material (napr 4K, 5K, atd...)
                     if folder_path:
-                        # pokud je slozka 4K, 5K, atd... v te kterou prochazime
-                        #if targetFolderName in subdirs:
-                            # cesta do slozky s 4K, 5K, atd...
-                            #targetFolder = os.path.join(folder_path, targetFolderName)
                             print(checkbox_list)
                             print(checkbox)
-                            # print("Slozka s materialem byla nalezena v ceste " + targetFolder)
-                            # ulozeni vsech bitmapa ve slozce 4K, 5K, atd...
-                            # dirPath = os.listdir(targetFolder)
                             hasColor = False
                             if folder_path is not None:
                                 loadAO = self.GetBool(ID.DIALOG_MAP_AO_CB)
@@ -1086,7 +1060,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MIN_LEVEL, 0, c4d.DESCFLAGS_SET_NONE)
                                             mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MAX_LEVEL, 1, c4d.DESCFLAGS_SET_NONE)
                                             dispLoaded = True
-                                        elif mapID == "DISP" and dispLoaded == False:
+                                        elif mapID == "DISP" and loadDispl and dispLoaded == False:
                                             print("Proslo DISP")
                                             bitmap = c4d.BaseShader(c4d.Xbitmap)
                                             bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
@@ -1102,8 +1076,9 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     doc.EndUndo()
                                     material_to_add.append(mat)                                   
                                     self.SetString(ID.DIALOG_ERROR, "")
+                elif len(active_checkbox_list) == 0:
+                    self.SetError("No materials were selected.")
                 c4d.EventAdd()
-
             return True
         
     def SetError(self, message):
