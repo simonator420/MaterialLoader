@@ -613,17 +613,29 @@ class ReawoteMaterialDialog(gui.GeDialog):
             print(path)
             # ulozeni vsech souboru a slozek v ceste do slozky
             dir = os.listdir(path)
-            same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
-            folder_dict = {}
             targetFolders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
+            #same_path_dirs = [d for d in dir if os.path.isdir(os.path.join(path, d)) and d.startswith(os.path.basename(path))]
+            same_path_dirs = []
+            folder_dict = {}
+
+            for root, dirs, files in os.walk(path):
+                for dir in dirs:
+                    if dir in targetFolders:
+                        same_path_dirs.append(os.path.join(root, dir))
+            # slozky s 8K, 16K, atd...
+            print("Tohle jsou same_path_dirs: ", same_path_dirs)
 
             for index, folder in enumerate(sorted(same_path_dirs)):
+                files = os.listdir(folder)
+                if files:
+                    fileNameParts = files[0].split("_")
+                    folderName = "_".join(fileNameParts[:3])
                 folder_path = os.path.join(path, folder)
                 subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
                 folder_dict[folder] = True
                 newID = len(self._listView.listOfTexture) + 1
                 split = folder.split(".")[0].split("_")
-                folderName = "_".join(split[:-1])
+                #folderName = "_".join(split[:-1])
                 tex = TextureObject(folderName.format(newID))
                 self._listView.listOfTexture.append(tex)
                 checkbox_list.append(tex)
@@ -634,10 +646,14 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 print(path_list)
                 print(" ")
                 self._treegui.Refresh()
-                for targetFolderName in targetFolders:
-                    if targetFolderName in subdirs:
-                        targetFolder = os.path.join(folder_path, targetFolderName)
-                        dirPath = os.listdir(targetFolder)
+                #for targetFolderName in targetFolders:
+                if folder_path:
+                        #targetFolder = os.path.join(folder_path, targetFolderName)
+                        # print(" ")
+                        # print(folder_path)
+                        # print(targetFolder)
+                        # print(" ")
+                        dirPath = os.listdir(folder_path)
                         hasColor = False
                         for file in dirPath:
                                 try: 
@@ -911,21 +927,21 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     active_checkbox_list.append(index)
                     # zde se ulozi slozka, ktera ma stejny index jako checkbox
                     folder_path = path_list[index]
-                    print(folder_path)
-                    subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
+                    print("Tohle je folder path ty mrdko", folder_path)
+                    #subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
                     # pro vsechny slozky, ktere obsahuji material (napr 4K, 5K, atd...)
-                    for targetFolderName in targetFolders:
+                    if folder_path:
                         # pokud je slozka 4K, 5K, atd... v te kterou prochazime
-                        if targetFolderName in subdirs:
+                        #if targetFolderName in subdirs:
                             # cesta do slozky s 4K, 5K, atd...
-                            targetFolder = os.path.join(folder_path, targetFolderName)
+                            #targetFolder = os.path.join(folder_path, targetFolderName)
                             print(checkbox_list)
                             print(checkbox)
-                            print("Slozka s materialem byla nalezena v ceste " + targetFolder)
+                            #print("Slozka s materialem byla nalezena v ceste " + targetFolder)
                             # ulozeni vsech bitmapa ve slozce 4K, 5K, atd...
-                            dirPath = os.listdir(targetFolder)
+                            #dirPath = os.listdir(targetFolder)
                             hasColor = False
-                            if targetFolder is not None:
+                            if folder_path is not None:
                                 loadAO = self.GetBool(ID.DIALOG_MAP_AO_CB)
                                 loadDispl = self.GetBool(ID.DIALOG_MAP_DISPL_CB)
                                 load16bdispl = self.GetBool(ID.DIALOG_MAP_16B_DISPL_CB)
@@ -935,9 +951,9 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 mat.SetParameter(ID.CORONA_MATERIAL_PREVIEWSIZE, ID.CORONA_MATERIAL_PREVIEWSIZE_1024, c4d.DESCFLAGS_SET_NONE)
                                 mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_BASE_IOR_VALUE, 1.56, c4d.DESCFLAGS_SET_NONE)
                                 fusionShader = None
-                                dir = os.listdir(targetFolder)
+                                dir = os.listdir(folder_path)
                                 for file in dir:
-                                    fullPath = os.path.join(targetFolder, file)
+                                    fullPath = os.path.join(folder_path, file)
                                     print("Type of fullpath: ", type(fullPath))
                                     parts = file.split(".")[0].split("_")
                                     mapID = parts[3]
