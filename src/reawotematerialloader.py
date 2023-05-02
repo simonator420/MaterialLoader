@@ -621,9 +621,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 folder_path = os.path.join(path, folder)
                 subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
                 folder_dict[folder] = True
-                # Add data to our DataStructure (ListView)
-                newID = len(self._listView.listOfTexture) + 1 
-                tex = TextureObject(folder.format(newID))
+                newID = len(self._listView.listOfTexture) + 1
+                split = folder.split(".")[0].split("_")
+                folderName = "_".join(split[:-1])
+                tex = TextureObject(folderName.format(newID))
                 self._listView.listOfTexture.append(tex)
                 checkbox_list.append(tex)
                 path_list.append(folder_path)
@@ -716,8 +717,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
                 folder_dict[folder] = True
                 # Add data to our DataStructure (ListView)
-                newID = len(self._listView.listOfTexture) + 1 
-                tex = TextureObject(folder.format(newID))
+                newID = len(self._listView.listOfTexture) + 1
+                split = folder.split(".")[0].split("_")
+                folderName = "_".join(split[:-1])
+                tex = TextureObject(folderName.format(newID))
                 self._listView.listOfTexture.append(tex)
                 checkbox_list.append(tex)
                 path_list.append(folder_path)
@@ -777,7 +780,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             self.Enable(ID.DIALOG_LOAD_BUTTON, True)
                             self.SetError("")
                         else:
-                            self.SetError("One or more folders do not contain the correct Reawote material.")
+                            self.SetError("One or more folders does not contain the correct Reawote material.")
                             print(folder, " neobsahuje spravnou slozku")
                 self.Enable(ID.DIALOG_LIST_BUTTON, True)
                 self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
@@ -803,8 +806,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
                     folder_dict[folder] = True
                     # Add data to our DataStructure (ListView)
-                    newID = len(self._listView.listOfTexture) + 1 
-                    tex = TextureObject(folder.format(newID))
+                    newID = len(self._listView.listOfTexture) + 1
+                    split = folder.split(".")[0].split("_")
+                    folderName = "_".join(split[:-1])
+                    tex = TextureObject(folderName.format(newID))
                     self._listView.listOfTexture.append(tex)
                     checkbox_list.append(tex)
                     path_list.append(folder_path)
@@ -900,7 +905,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
             folderPath = ""
             targetFolders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             folder_dict = {}
-            number = 1
+            dispLoaded = False
             for index, checkbox in enumerate(checkbox_list):
                 if checkbox.IsSelected:
                     active_checkbox_list.append(index)
@@ -1036,8 +1041,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_TEXTURE, bitmap, c4d.DESCFLAGS_SET_NONE)
                                             mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MIN_LEVEL, 0, c4d.DESCFLAGS_SET_NONE)
                                             mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MAX_LEVEL, 1, c4d.DESCFLAGS_SET_NONE)
-                                            number +=1
-                                        elif mapID == "DISP" and number == 1:
+                                            dispLoaded = True
+                                        elif mapID == "DISP" and dispLoaded == False:
                                             print("Proslo DISP")
                                             bitmap = c4d.BaseShader(c4d.Xbitmap)
                                             bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
