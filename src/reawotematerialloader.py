@@ -626,9 +626,13 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
             for index, folder in enumerate(sorted(same_path_dirs)):
                 files = os.listdir(folder)
+                print(f"Tohle je folder: {folder}, a tohle jsou files: {files}")
                 if files:
                     fileNameParts = files[0].split("_")
                     folderName = "_".join(fileNameParts[:3])
+                else:
+                    print("Files not found")
+                    continue
                 folder_path = os.path.join(path, folder)
                 subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
                 folder_dict[folder] = True
@@ -721,9 +725,13 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
             for index, folder in enumerate(sorted(same_path_dirs)):
                 files = os.listdir(folder)
+                print(f"Tohle je folder: {folder}, a tohle jsou files: {files}")
                 if files:
                     fileNameParts = files[0].split("_")
                     folderName = "_".join(fileNameParts[:3])
+                else:
+                    print("Files not found")
+                    continue
                 folder_path = os.path.join(path, folder)
                 subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
                 folder_dict[folder] = True
@@ -797,7 +805,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
             while len(self._listView.listOfTexture) > 0:
                 tex = self._listView.listOfTexture[0]
                 self._listView.listOfTexture.remove(tex)
+                checkbox_list.clear()
+                path_list.clear()
             self._treegui.Refresh()
+            print(f"Tohle je path_list: {path_list}")
             for path in path_lists:
                 dir = os.listdir(path)
                 targetFolders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
@@ -882,6 +893,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     self.Enable(ID.DIALOG_CLEAN_BUTTON, True)
                 active_checkbox_list = []
                 self._treegui.Refresh()
+                print(f"Tohle je checkboxlist: {checkbox_list}")
         
         if id == ID.DIALOG_CLEAN_BUTTON:
             while len(self._listView.listOfTexture) > 0:
