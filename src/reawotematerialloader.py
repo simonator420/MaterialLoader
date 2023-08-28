@@ -14,6 +14,7 @@ material_to_add = []
 path_lists = []
 path_list = []
 mapID_list = []
+file_names = []
 path = ""
 
 ID_CHECKBOX = 999
@@ -334,6 +335,11 @@ class ID():
     CORONA_NORMALMAP_CUSTOM_UVW_OVERRIDE = 11341
     CORONA_NORMALMAP_CUSTOM_UVW_CHANNEL = 11342
 
+    VRAY_MATERIAL = 1053286
+    VRAY_BITMAP_SHADER = 1055619
+    
+    VRAY_USE_BUMP_SHADOWS = 1921591250
+
 class TextureObject(object):
     texturePath = "TexPath"
     otherData = "OtherData"
@@ -484,9 +490,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.GroupBegin(ID.DIALOG_GROUP_RENDERER,  c4d.BFH_SCALEFIT, 2, 1, "Renderer", 0, 10, 10)
         self.AddStaticText(ID.DIALOG_RENDERER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Select Renderer", 0)
         renderers = self.AddComboBox(ID.DIALOG_RENDERER_COMBOBOX, c4d.BFH_SCALEFIT, inith=10, initw=50)
+        physical = self.AddChild(renderers, 6400, "Physical")
+        corona = self.AddChild(renderers, 6401, "Corona")
+        vray = self.AddChild(renderers, 6402, "V-ray")
         self.GroupEnd()
-
-        
 
         self.AddEditText(ID.DIALOG_FOLDER_LIST,  c4d.BFH_SCALEFIT, inith=10, initw=50)
         self.AddCheckbox(ID.DIALOG_MAP_AO_CB, c4d.BFH_SCALEFIT, 1, 1, "Include ambient occlusion (AO) maps")
@@ -530,7 +537,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         self.SetTimer(1000)
         
-
         return True
     
     def InitValues(self):
@@ -560,6 +566,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, False)
         self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, False)
         self.Enable(ID.DIALOG_CLEAN_BUTTON, False)
+        self.Enable(ID.DIALOG_RENDERER_COMBOBOX, False)
 
         layout = c4d.BaseContainer()
         layout.SetLong(ID_CHECKBOX, c4d.LV_CHECKBOX)
@@ -578,11 +585,28 @@ class ReawoteMaterialDialog(gui.GeDialog):
             self._listView.listOfTexture.remove(tex)
         self._treegui.Refresh()
 
-        child = c4d.BaseContainer()
-        child.SetString(1, "Nečum")
-        self.AddChild(ID.DIALOG_RENDERER_COMBOBOX, 123132133, "Nečum")
-
         return True
+    
+    def CreateVrayBitMap(self, mat, MAP, NAME, LINK, INV):
+        try :
+            shader = c4d.BaseList2D(1055619) # VRay5
+            pFileID = c4d.BITMAPBUFFER_FILE
+            pInvID = c4d.TEXBITMAP_INVERT
+        except :
+            shader = c4d.BaseList2D(1037364)
+            pFileID = c4d.VRAY_BITMAPCCGAMMA_BITMAP_FILENAME
+            pInvID = c4d.VRAY_BITMAPCCGAMMA_INVERT
+        
+        # try : shader[pFileID] = (matInfo[MAP]).encode('utf-8')
+        # except : shader[pFileID] = matInfo[MAP]
+        
+        if INV: shader[pInvID] = True
+        shader.SetName(NAME)
+        
+        if LINK != None : mat[LINK] = shader
+        
+        mat.InsertShader(shader)
+        return shader
     
     def Command(self, id, msg,):
 
@@ -596,18 +620,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
             except: 
                 pass
             self.Reset()
-            while len(self._listView.listOfTexture) > 0:
-                tex = self._listView.listOfTexture[0]
-                self._listView.listOfTexture.remove(tex)
-            while len(path_list) > 0:
-                for a in path_list:
-                    path_list.remove(a)
-            while len(path_lists) > 0:
-                for b in path_lists:
-                    path_lists.remove(b)
-            while len(checkbox_list) > 0:
-                for c in checkbox_list:
-                    checkbox_list.remove(c)
+
+            self._listView.listOfTexture.clear()
+            path_list.clear()
+            path_lists.clear()
+            checkbox_list.clear()
             
             self._treegui.Refresh()
 
@@ -623,6 +640,23 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     if dir in targetFolders:
                         same_path_dirs.append(os.path.join(root, dir))
             print("Tohle jsou same_path_dirs: ", same_path_dirs)
+
+            # in case of tex folder
+            # if len(same_path_dirs) == 0:
+            #     self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, 6400)
+            #     for file in dir:
+            #         file_name = (file.split("_"))[0]
+            #         folder_path = os.path.join(path, file)
+            #         if file_name not in file_names and file_name[0].isalpha():
+            #             newID = len(self._listView.listOfTexture) + 1
+            #             tex = TextureObject(file_name.format(newID))
+            #             self._listView.listOfTexture.append(tex)
+            #             file_names.append(file_name)
+            #             checkbox_list.append(tex)
+            #         self._treegui.Refresh()
+
+            # else:
+            #     self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, 6401)
 
             for index, folder in enumerate(sorted(same_path_dirs)):
                 files = os.listdir(folder)
@@ -694,16 +728,28 @@ class ReawoteMaterialDialog(gui.GeDialog):
                         self.SetError("")
                     # else:
                     #     self.SetError("One or more folders do not contain the correct Reawote material.")
-                self.Enable(ID.DIALOG_LIST_BUTTON, True)
-                self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
-                self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
-                self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, True)
-                self.Enable(ID.DIALOG_CLEAN_BUTTON, True)
+            self.Enable(ID.DIALOG_LIST_BUTTON, True)
+            self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
+            self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
+            self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, True)
+            self.Enable(ID.DIALOG_CLEAN_BUTTON, True)
+            self.Enable(ID.DIALOG_RENDERER_COMBOBOX, True)
+            self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, 6400)
+
             active_checkbox_list = []
 
         if id == ID.DIALOG_SELECT_ALL_BUTTON:
+            select_all = True
             for item in checkbox_list:
-                item.Select()
+                if item.IsSelected == False:
+                    select_all = False
+        
+            if select_all == True:
+                for item in checkbox_list:
+                    item.Deselect()
+            else:
+                for item in checkbox_list:
+                    item.Select()
             self._treegui.Refresh()
 
         if id == ID.DIALOG_ADD_TO_QUEUE_BUTTON:
@@ -896,18 +942,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 print(f"Tohle je checkboxlist: {checkbox_list}")
         
         if id == ID.DIALOG_CLEAN_BUTTON:
-            while len(self._listView.listOfTexture) > 0:
-                tex = self._listView.listOfTexture[0]
-                self._listView.listOfTexture.remove(tex)
-            while len(path_list) > 0:
-                for a in path_list:
-                    path_list.remove(a)
-            while len(path_lists) > 0:
-                for b in path_lists:
-                    path_lists.remove(b)
-            while len(checkbox_list) > 0:
-                for c in checkbox_list:
-                    checkbox_list.remove(c)
+            self._listView.listOfTexture.clear()
+            path_list.clear()
+            path_lists.clear()
+            checkbox_list.clear()
             self._treegui.Refresh()
             self.Reset()
 
@@ -926,12 +964,124 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             print(checkbox_list)
                             print(checkbox)
                             hasColor = False
-                            if folder_path is not None:
-                                loadAO = self.GetBool(ID.DIALOG_MAP_AO_CB)
-                                loadDispl = self.GetBool(ID.DIALOG_MAP_DISPL_CB)
-                                load16bdispl = self.GetBool(ID.DIALOG_MAP_16B_DISPL_CB)
-                                loadIor = self.GetBool(ID.DIALOG_MAP_IOR_CB)
-                                load16nrm = self.GetBool(ID.DIALOG_MAP_16B_NORMAL_CB)
+                            # if folder_path is not None:
+                            loadAO = self.GetBool(ID.DIALOG_MAP_AO_CB)
+                            loadDispl = self.GetBool(ID.DIALOG_MAP_DISPL_CB)
+                            load16bdispl = self.GetBool(ID.DIALOG_MAP_16B_DISPL_CB)
+                            loadIor = self.GetBool(ID.DIALOG_MAP_IOR_CB)
+                            load16nrm = self.GetBool(ID.DIALOG_MAP_16B_NORMAL_CB)
+
+                            ############
+                            # Physical #
+                            ############    
+
+                            if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6400:
+
+                                mat = c4d.BaseMaterial(c4d.Mmaterial)
+                                mat[c4d.MATERIAL_PREVIEWSIZE] = 10
+                                bitmap = c4d.BaseShader(c4d.Xbitmap)
+                                fusionShader = None
+                                dir = os.listdir(folder_path)
+                                # tex folder
+                                for file in dir:
+                                    # if len(same_path_dirs) == 0:
+                                    #     if file_names[index] in file:
+                                    #         fullPath = os.path.join(folder_path, file)
+                                    #         mapID = str(file).split("_")[1]
+                                    #         mapID_list.append(mapID)
+                                    #         mat.SetName("_".join(parts[0:3]))
+
+                                    # else:
+                                    fullPath = os.path.join(folder_path, file)
+                                    parts = file.split(".")[0].split("_")
+                                    mapID = parts[3]
+                                    mat.SetName("_".join(parts[0:3]))    
+                                    mapID_list.append(mapID)
+                                    if mapID == "COL" or mapID == "COLOR":
+                                        if not loadAO or "AO" not in mapID_list:
+                                            bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                            mat.InsertShader(bitmap)
+                                            mat[c4d.MATERIAL_COLOR_SHADER] = bitmap
+                                        else:
+                                            if not fusionShader:
+                                                fusionShader = c4d.BaseShader(c4d.Xfusion)
+                                                fusionShader.SetParameter(c4d.SLA_FUSION_MODE, c4d.SLA_FUSION_MODE_MULTIPLY, c4d.DESCFLAGS_SET_NONE)
+                                                fusionShader.SetParameter(c4d.SLA_FUSION_BLEND, 1.0, c4d.DESCFLAGS_SET_NONE)
+                                                mat.InsertShader(fusionShader)
+                                                mat[c4d.MATERIAL_COLOR_SHADER] = fusionShader
+                                            bitmap = c4d.BaseShader(c4d.Xbitmap)
+                                            bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
+                                            fusionShader.InsertShader(bitmap)
+                                            fusionShader.SetParameter(c4d.SLA_FUSION_BASE_CHANNEL, bitmap, c4d.DESCFLAGS_SET_NONE)
+                                    elif loadAO and mapID == "AO":
+                                        if not fusionShader:
+                                            fusionShader = c4d.BaseShader(c4d.Xfusion)
+                                            fusionShader.SetParameter(c4d.SLA_FUSION_MODE, c4d.SLA_FUSION_MODE_MULTIPLY, c4d.DESCFLAGS_SET_NONE)
+                                            fusionShader[c4d.SLA_FUSION_BLEND] = 1.0
+                                            mat.InsertShader(fusionShader)
+                                            mat[c4d.MATERIAL_COLOR_SHADER] = fusionShader
+                                        bitmap = c4d.BaseShader(c4d.Xbitmap)
+                                        bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
+                                        fusionShader.InsertShader(bitmap)
+                                        fusionShader[c4d.SLA_FUSION_BLEND_CHANNEL] = bitmap
+                                    elif mapID == "NRM" and (not load16nrm or "NRM16" not in mapID_list):
+                                        normal_shader = c4d.BaseShader(c4d.Xbitmap)
+                                        mat[c4d.MATERIAL_USE_NORMAL] = True
+                                        normal_shader[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat[c4d.MATERIAL_NORMAL_SHADER] = normal_shader
+                                        normal_shader[c4d.BITMAPSHADER_COLORPROFILE] = 1
+                                        mat.InsertShader(normal_shader)
+                                    elif mapID == "NRM16" and load16nrm:
+                                        normal_shader = c4d.BaseShader(c4d.Xbitmap)
+                                        mat[c4d.MATERIAL_USE_NORMAL] = True
+                                        normal_shader[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat[c4d.MATERIAL_NORMAL_SHADER] = normal_shader
+                                        normal_shader[c4d.BITMAPSHADER_COLORPROFILE] = 1
+                                        mat.InsertShader(normal_shader)
+                                    elif mapID == "BUMP":
+                                        bump_shader = c4d.BaseShader(c4d.Xbitmap)
+                                        bump_shader[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat[c4d.MATERIAL_BUMP_SHADER] = bump_shader
+                                        mat.InsertShader(bump_shader)
+                                        mat[c4d.MATERIAL_USE_BUMP] = True
+                                    elif mapID == "ROUGH":
+                                        rough_shader = c4d.BaseShader(c4d.Xbitmap)
+                                        rough_shader.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
+                                        rough_shader[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat.InsertShader(rough_shader)
+                                        bases = [c4d.REFLECTION_LAYER_LAYER_DATA + c4d.REFLECTION_LAYER_LAYER_SIZE * 4]
+                                        for base in bases:
+                                            mat[base + c4d.REFLECTION_LAYER_MAIN_DISTRIBUTION] = 3
+                                            mat[base + c4d.REFLECTION_LAYER_MAIN_VALUE_ROUGHNESS] = 100
+                                            mat[base + c4d.REFLECTION_LAYER_MAIN_SHADER_ROUGHNESS] = rough_shader
+                                    elif mapID == "DISP" and (not load16bdispl or "DISP16" not in mapID_list):
+                                        disp_shader = c4d.BaseShader(c4d.Xbitmap)
+                                        disp_shader[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat[c4d.MATERIAL_DISPLACEMENT_SHADER] = disp_shader
+                                        disp_shader[c4d.BITMAPSHADER_COLORPROFILE] = 1
+                                        mat.InsertShader(disp_shader)
+                                        mat[c4d.MATERIAL_USE_DISPLACEMENT] = True
+                                    elif mapID == "DISP16" in file:
+                                        disp_shader = c4d.BaseShader(c4d.Xbitmap)
+                                        disp_shader[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat[c4d.MATERIAL_DISPLACEMENT_SHADER] = disp_shader
+                                        disp_shader[c4d.BITMAPSHADER_COLORPROFILE] = 1
+                                        mat.InsertShader(disp_shader)
+                                        mat[c4d.MATERIAL_USE_DISPLACEMENT] = True
+
+                                doc = c4d.documents.GetActiveDocument()
+                                doc.StartUndo()
+                                doc.InsertMaterial(mat)
+                                doc.AddUndo(c4d.UNDOTYPE_NEW, mat)
+                                doc.EndUndo()
+                                material_to_add.append(mat)                                   
+                                self.SetString(ID.DIALOG_ERROR, "")
+
+                            ##########
+                            # Corona #
+                            ##########
+                    
+                            if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6401:
                                 mat = c4d.BaseMaterial(ID.CORONA_STR_MATERIAL_PHYSICAL)
                                 mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_ROUGHNESS_MODE, ID.CORONA_PHYSICAL_MATERIAL_ROUGHNESS_MODE_GLOSSINESS, c4d.DESCFLAGS_SET_NONE)
                                 mat.SetParameter(ID.CORONA_MATERIAL_PREVIEWSIZE, ID.CORONA_MATERIAL_PREVIEWSIZE_1024, c4d.DESCFLAGS_SET_NONE)
@@ -1088,6 +1238,46 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     doc.EndUndo()
                                     material_to_add.append(mat)                                   
                                     self.SetString(ID.DIALOG_ERROR, "")
+
+                            #########
+                            # V-ray #
+                            #########
+
+                            # https://plugincafe.maxon.net/topic/13750/access-renderer-specific-settings-with-python    
+
+                            if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6402:
+                                # print(c4d.plugins.FindPlugin(1053272))
+                                mat = c4d.BaseMaterial(ID.VRAY_MATERIAL)
+                                fusionShader = None
+                                dir = os.listdir(folder_path)
+                                mat[c4d.VRAY_SETTINGS_MATERIAL_PREVIEW_OVERRIDE] = True
+                                for file in dir:
+                                    fullPath = os.path.join(folder_path, file)
+                                    print("TOHLE JE FULLPATH", fullPath)
+                                    parts = file.split(".")[0].split("_")
+                                    mat.SetName("_".join(parts[0:3]))
+                                    mapID = parts[3]
+                                    mapID_list.append(mapID)
+
+                                    if mapID == "COL":
+                                        vrayBitmapShader = c4d.BaseShader(1055619)
+                                        mat.InsertShader(vrayBitmapShader)
+                                        mat[c4d.BRDFVRAYMTL_DIFFUSE_TEXTURE] = vrayBitmapShader
+                                        vrayBitmapShader[c4d.TEXBITMAP_COLOR_MULT_TEXTURE] = fullPath
+                                        c4d.EventAdd()
+
+                                    if mapID == "GLOSS":
+                                        vec = c4d.Vector(255,255,255)
+                                        mat[c4d.BRDFVRAYMTL_REFLECT_VALUE] = vec
+
+                                doc = c4d.documents.GetActiveDocument()
+                                doc.StartUndo()
+                                doc.InsertMaterial(mat)
+                                doc.AddUndo(c4d.UNDOTYPE_NEW, mat)
+                                doc.EndUndo()
+                                material_to_add.append(mat)                                   
+                                self.SetString(ID.DIALOG_ERROR, "")
+
                 elif len(active_checkbox_list) == 0:
                     self.SetError("No materials were selected.")
                 c4d.EventAdd()
