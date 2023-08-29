@@ -336,8 +336,10 @@ class ID():
     CORONA_NORMALMAP_CUSTOM_UVW_CHANNEL = 11342
 
     VRAY_MATERIAL = 1053286
+    VRAY_BITMAP = 5833
     VRAY_BITMAP_SHADER = 1055619
     
+    VRAY_NORMAL_MAP = 1057881
     VRAY_USE_BUMP_SHADOWS = 1921591250
 
 class TextureObject(object):
@@ -1251,6 +1253,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 fusionShader = None
                                 dir = os.listdir(folder_path)
                                 mat[c4d.VRAY_SETTINGS_MATERIAL_PREVIEW_OVERRIDE] = True
+                                mat[c4d.VRAY_SETTINGS_MATERIAL_PREVIEW_VIEWPORT_SIZE] = 10
                                 for file in dir:
                                     fullPath = os.path.join(folder_path, file)
                                     print("TOHLE JE FULLPATH", fullPath)
@@ -1260,15 +1263,62 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     mapID_list.append(mapID)
 
                                     if mapID == "COL":
-                                        vrayBitmapShader = c4d.BaseShader(1055619)
-                                        mat.InsertShader(vrayBitmapShader)
-                                        mat[c4d.BRDFVRAYMTL_DIFFUSE_TEXTURE] = vrayBitmapShader
-                                        vrayBitmapShader[c4d.TEXBITMAP_COLOR_MULT_TEXTURE] = fullPath
-                                        c4d.EventAdd()
+                                        bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
+                                        bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.BRDFVRAYMTL_DIFFUSE_TEXTURE] = bitmap
 
-                                    if mapID == "GLOSS":
+                                    elif mapID == "NRM" and (not load16nrm or "NRM16" not in mapID_list):
+                                        bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
+                                        bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        bitmap[c4d.BITMAPSHADER_COLORPROFILE] = 1
+                                        mat.InsertShader(bitmap)
+                                        texture = c4d.BaseShader(ID.VRAY_NORMAL_MAP)
+                                        texture[c4d.TEXNORMALBUMP_BUMP_TEX_COLOR] = bitmap
+                                        mat.InsertShader(texture)
+                                        mat[c4d.BRDFVRAYMTL_BUMP_MAP] = texture
+                                        mat[c4d.TEXNORMALBUMP_MAP_TYPE] = 1
+
+                                    elif mapID == "GLOSS": # DONE
+                                        bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
+                                        bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.BRDFVRAYMTL_REFLECT_GLOSSINESS_TEXTURE] = bitmap
                                         vec = c4d.Vector(255,255,255)
                                         mat[c4d.BRDFVRAYMTL_REFLECT_VALUE] = vec
+
+                                    elif mapID == "METAL": # DONE
+                                        bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
+                                        bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.BRDFVRAYMTL_METALNESS_TEXTURE] = bitmap
+
+                                    elif mapID == "OPAC": # DONE
+                                        bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
+                                        bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.BRDFVRAYMTL_OPACITY_COLOR_TEXTURE] = bitmap
+
+                                    elif mapID == "SSS": # DONE
+                                        bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
+                                        bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.BRDFVRAYMTL_FOG_COLOR_TEX_TEXTURE] = bitmap
+                                        mat[c4d.BRDFVRAYMTL_TRANSLUCENCY] = 6
+                                    
+                                    elif mapID == "SHEEN": # DONE
+                                        bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
+                                        bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat.InsertShader(bitmap)
+                                        [c4d.BRDFVRAYMTL_SHEEN_COLOR_TEXTURE] = bitmap
+
+                                    elif mapID == "SHEENGLOSS": # DONE
+                                        bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
+                                        bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.BRDFVRAYMTL_SHEEN_GLOSSINESS_TEXTURE] = bitmap
+
+                                    
 
                                 doc = c4d.documents.GetActiveDocument()
                                 doc.StartUndo()
