@@ -3,6 +3,7 @@ import sys
 
 import c4d
 from c4d import plugins, gui
+import maxon
 
 
 REAWOTE_PLUGIN_ID=1056421
@@ -1352,16 +1353,34 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             # https://plugincafe.maxon.net/topic/14430/create-a-rs-standard-material-with-a-texture-node-connected-to-the-color-and-also-wired-up-to-a-color-splitter-that-it-is-connected-to-the-opacity?_=1693307452945&lang=cs
 
                             if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6403:
-
-                                doc = c4d.documents.GetActiveDocument() 
-                                c4d.CallCommand(1036759, 1000)
+                                
+                                dir = os.listdir(folder_path)
+                                doc = c4d.documents.GetActiveDocument()
+                                renderData = doc.GetActiveRenderData()
+                                renderData[c4d.RDATA_RENDERENGINE] = 1036219
+                                c4d.EventAdd()
+ 
+                                # c4d.CallCommand(1036759, 1000)
                                 mat = doc.GetActiveMaterial()
-                                # doc.StartUndo()
-                                # doc.InsertMaterial(mat)
-                                # doc.AddUndo(c4d.UNDOTYPE_NEW, mat)
-                                # doc.EndUndo()
-                                # material_to_add.append(mat)                                   
-                                # self.SetString(ID.DIALOG_ERROR, "")
+                                mat: c4d.BaseMaterial = c4d.BaseMaterial(c4d.Mmaterial)
+                                if not mat:
+                                    raise MemoryError(f"{mat = }")
+                                nodeMaterial: c4d.NodeMaterial = mat.GetNodeMaterialReference()
+                                graph: maxon.GraphModelRef = nodeMaterial.CreateDefaultGraph(maxon.Id("com.redshift3d.redshift4c4d.class.nodespace"))
+                                if graph.IsNullValue():
+                                    raise RuntimeError("Could not add standard graph to material.")
+                                else:
+                                    pass
+                                mat[c4d.MATERIAL_PREVIEWSIZE] = 10
+                                for file in dir:
+                                    fullPath = os.path.join(folder_path, file)
+                                    print("TOHLE JE FULLPATH", fullPath)
+                                    parts = file.split(".")[0].split("_")
+                                    mat.SetName("_".join(parts[0:3]))
+                                    mapID = parts[3]
+                                    mapID_list.append(mapID)
+
+                                doc.InsertMaterial(mat)
 
                 elif len(active_checkbox_list) == 0:
                     self.SetError("No materials were selected.")
