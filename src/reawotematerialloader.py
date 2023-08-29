@@ -4,6 +4,7 @@ import sys
 import c4d
 from c4d import plugins, gui
 
+
 REAWOTE_PLUGIN_ID=1056421
 
 dialog = None
@@ -343,6 +344,8 @@ class ID():
     VRAY_USE_BUMP_SHADOWS = 1921591250
     VRAY_FUSION = 1011109
 
+    REDSHIFT_MATERIAL = 1036219
+
 class TextureObject(object):
     texturePath = "TexPath"
     otherData = "OtherData"
@@ -461,6 +464,8 @@ class ListView(c4d.gui.TreeViewFunctions):
             if tex.IsSelected:
                 self.listOfTexture.remove(tex)
 
+
+
 class ReawoteMaterialDialog(gui.GeDialog):
     has16bDisp = False
     has16bNormal = False
@@ -496,6 +501,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         physical = self.AddChild(renderers, 6400, "Physical")
         corona = self.AddChild(renderers, 6401, "Corona")
         vray = self.AddChild(renderers, 6402, "V-ray")
+        redshift = self.AddChild(renderers, 6403, "Redshift")
         self.GroupEnd()
 
         self.AddEditText(ID.DIALOG_FOLDER_LIST,  c4d.BFH_SCALEFIT, inith=10, initw=50)
@@ -589,27 +595,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self._treegui.Refresh()
 
         return True
-    
-    def CreateVrayBitMap(self, mat, MAP, NAME, LINK, INV):
-        try :
-            shader = c4d.BaseList2D(1055619) # VRay5
-            pFileID = c4d.BITMAPBUFFER_FILE
-            pInvID = c4d.TEXBITMAP_INVERT
-        except :
-            shader = c4d.BaseList2D(1037364)
-            pFileID = c4d.VRAY_BITMAPCCGAMMA_BITMAP_FILENAME
-            pInvID = c4d.VRAY_BITMAPCCGAMMA_INVERT
-        
-        # try : shader[pFileID] = (matInfo[MAP]).encode('utf-8')
-        # except : shader[pFileID] = matInfo[MAP]
-        
-        if INV: shader[pInvID] = True
-        shader.SetName(NAME)
-        
-        if LINK != None : mat[LINK] = shader
-        
-        mat.InsertShader(shader)
-        return shader
+
+
     
     def Command(self, id, msg,):
 
@@ -1246,8 +1233,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             # V-ray #
                             #########
 
-                            # https://plugincafe.maxon.net/topic/13750/access-renderer-specific-settings-with-python    
-
                             if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6402:
                                 # print(c4d.plugins.FindPlugin(1053272))
                                 mat = c4d.BaseMaterial(ID.VRAY_MATERIAL)
@@ -1359,6 +1344,24 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 doc.EndUndo()
                                 material_to_add.append(mat)                                   
                                 self.SetString(ID.DIALOG_ERROR, "")
+
+                            ############
+                            # Redshift #
+                            ############
+
+                            # https://plugincafe.maxon.net/topic/14430/create-a-rs-standard-material-with-a-texture-node-connected-to-the-color-and-also-wired-up-to-a-color-splitter-that-it-is-connected-to-the-opacity?_=1693307452945&lang=cs
+
+                            if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6403:
+
+                                doc = c4d.documents.GetActiveDocument() 
+                                c4d.CallCommand(1036759, 1000)
+                                mat = doc.GetActiveMaterial()
+                                # doc.StartUndo()
+                                # doc.InsertMaterial(mat)
+                                # doc.AddUndo(c4d.UNDOTYPE_NEW, mat)
+                                # doc.EndUndo()
+                                # material_to_add.append(mat)                                   
+                                # self.SetString(ID.DIALOG_ERROR, "")
 
                 elif len(active_checkbox_list) == 0:
                     self.SetError("No materials were selected.")
