@@ -1275,9 +1275,20 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         mat.InsertShader(bitmap)
                                         texture = c4d.BaseShader(ID.VRAY_NORMAL_MAP)
                                         texture[c4d.TEXNORMALBUMP_BUMP_TEX_COLOR] = bitmap
+                                        texture[c4d.TEXNORMALBUMP_MAP_TYPE] = 1
                                         mat.InsertShader(texture)
                                         mat[c4d.BRDFVRAYMTL_BUMP_MAP] = texture
-                                        mat[c4d.TEXNORMALBUMP_MAP_TYPE] = 1
+                                    
+                                    elif mapID == "NRM16" and load16nrm:
+                                        bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
+                                        bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                        bitmap[c4d.BITMAPSHADER_COLORPROFILE] = 1
+                                        mat.InsertShader(bitmap)
+                                        texture = c4d.BaseShader(ID.VRAY_NORMAL_MAP)
+                                        texture[c4d.TEXNORMALBUMP_BUMP_TEX_COLOR] = bitmap
+                                        texture[c4d.TEXNORMALBUMP_MAP_TYPE] = 1
+                                        mat.InsertShader(texture)
+                                        mat[c4d.BRDFVRAYMTL_BUMP_MAP] = texture
 
                                     elif mapID == "GLOSS": # DONE
                                         bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
