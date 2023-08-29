@@ -341,6 +341,7 @@ class ID():
     
     VRAY_NORMAL_MAP = 1057881
     VRAY_USE_BUMP_SHADOWS = 1921591250
+    VRAY_FUSION = 1011109
 
 class TextureObject(object):
     texturePath = "TexPath"
@@ -1263,10 +1264,32 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     mapID_list.append(mapID)
 
                                     if mapID == "COL":
+                                        if not loadAO or "AO" not in mapID_list:
+                                            bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
+                                            bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                            mat.InsertShader(bitmap)
+                                            mat[c4d.BRDFVRAYMTL_DIFFUSE_TEXTURE] = bitmap
+                                        else:
+                                            if not fusionShader:
+                                                fusionShader = c4d.BaseShader(c4d.Xfusion)
+                                                fusionShader[c4d.SLA_FUSION_MODE] = c4d.SLA_FUSION_MODE_MULTIPLY
+                                                mat.InsertShader(fusionShader)
+                                                mat[c4d.BRDFVRAYMTL_DIFFUSE_TEXTURE] = fusionShader
+                                            bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
+                                            bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
+                                            fusionShader.InsertShader(bitmap)
+                                            fusionShader[c4d.SLA_FUSION_BASE_CHANNEL] = bitmap
+                                    
+                                    elif loadAO and mapID == "AO":
+                                        if not fusionShader:
+                                            fusionShader = c4d.BaseShader(c4d.Xfusion)
+                                            fusionShader[c4d.SLA_FUSION_MODE] = c4d.SLA_FUSION_MODE_MULTIPLY
+                                            mat.InsertShader(fusionShader)
+                                            mat[c4d.BRDFVRAYMTL_DIFFUSE_TEXTURE] = fusionShader
                                         bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
                                         bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
-                                        mat.InsertShader(bitmap)
-                                        mat[c4d.BRDFVRAYMTL_DIFFUSE_TEXTURE] = bitmap
+                                        fusionShader.InsertShader(bitmap)
+                                        fusionShader[c4d.SLA_FUSION_BLEND_CHANNEL] = bitmap
 
                                     elif mapID == "NRM" and (not load16nrm or "NRM16" not in mapID_list):
                                         bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
@@ -1314,22 +1337,20 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
                                         bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
                                         mat.InsertShader(bitmap)
-                                        mat[c4d.BRDFVRAYMTL_FOG_COLOR_TEX_TEXTURE] = bitmap
+                                        mat[c4d.BRDFVRAYMTL_TRANSLUCENCY_COLOR_TEXTURE] = bitmap
                                         mat[c4d.BRDFVRAYMTL_TRANSLUCENCY] = 6
                                     
                                     elif mapID == "SHEEN": # DONE
                                         bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
                                         bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
                                         mat.InsertShader(bitmap)
-                                        [c4d.BRDFVRAYMTL_SHEEN_COLOR_TEXTURE] = bitmap
+                                        mat[c4d.BRDFVRAYMTL_SHEEN_COLOR_TEXTURE] = bitmap
 
                                     elif mapID == "SHEENGLOSS": # DONE
                                         bitmap = c4d.BaseShader(ID.VRAY_BITMAP)
                                         bitmap[c4d.BITMAPSHADER_FILENAME] = fullPath
                                         mat.InsertShader(bitmap)
                                         mat[c4d.BRDFVRAYMTL_SHEEN_GLOSSINESS_TEXTURE] = bitmap
-
-                                    
 
                                 doc = c4d.documents.GetActiveDocument()
                                 doc.StartUndo()
