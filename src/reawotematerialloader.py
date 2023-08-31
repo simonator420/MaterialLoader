@@ -4,6 +4,7 @@ import sys
 import c4d
 from c4d import plugins, gui
 import maxon
+import redshift
 
 
 REAWOTE_PLUGIN_ID=1056421
@@ -597,7 +598,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         return True
 
-
+    def GetFileAssetUrl(path: str) -> maxon.Url:
+        return maxon.Url(path)
     
     def Command(self, id, msg,):
 
@@ -1360,25 +1362,71 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 renderData[c4d.RDATA_RENDERENGINE] = 1036219
                                 c4d.EventAdd()
  
-                                # c4d.CallCommand(1036759, 1000)
-                                mat = doc.GetActiveMaterial()
-                                mat: c4d.BaseMaterial = c4d.BaseMaterial(c4d.Mmaterial)
-                                if not mat:
-                                    raise MemoryError(f"{mat = }")
-                                nodeMaterial: c4d.NodeMaterial = mat.GetNodeMaterialReference()
-                                graph: maxon.GraphModelRef = nodeMaterial.CreateDefaultGraph(maxon.Id("com.redshift3d.redshift4c4d.class.nodespace"))
-                                if graph.IsNullValue():
-                                    raise RuntimeError("Could not add standard graph to material.")
-                                else:
-                                    pass
-                                mat[c4d.MATERIAL_PREVIEWSIZE] = 10
+                                # # c4d.CallCommand(1036759, 1000)
+                                # mat = doc.GetActiveMaterial()
+                                # mat: c4d.BaseMaterial = c4d.BaseMaterial(c4d.Mmaterial)
+                                # if not mat:
+                                #     raise MemoryError(f"{mat = }")
+                                # nodeMaterial: c4d.NodeMaterial = mat.GetNodeMaterialReference()
+                                # graph: maxon.GraphModelRef = nodeMaterial.CreateDefaultGraph(maxon.Id("com.redshift3d.redshift4c4d.class.nodespace"))
+                                # if graph.IsNullValue():
+                                #     raise RuntimeError("Could not add standard graph to material.")
+                                # else:
+                                #     pass
+                                # mat[c4d.MATERIAL_PREVIEWSIZE] = 10
+                                count = 1
                                 for file in dir:
                                     fullPath = os.path.join(folder_path, file)
                                     print("TOHLE JE FULLPATH", fullPath)
+                                    # parts = file.split(".")[0].split("_")
+                                    # mat.SetName("_".join(parts[0:3]))
+                                    # mapID = parts[3]
+                                    # mapID_list.append(mapID)
+                                    rsNodeSpaceID: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.class.nodespace")
+
+                                    outputNodeID: maxon.Id = maxon.Id(("com.redshift3d.redshift4c4d.nodes.core.standardmaterial"))
+                                    colorInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.base_color"
+
+                                    textureNodeID: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.nodes.core.texturesampler")
+                                    textureNodePortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.texturesampler.tex0"
+                                    textureNodePathPortID: maxon.String = "path"
+                                    textureColorOutPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.texturesampler.outcolor"
+
+                                    mat: c4d.BaseMaterial = c4d.BaseMaterial(c4d.Mmaterial)
                                     parts = file.split(".")[0].split("_")
                                     mat.SetName("_".join(parts[0:3]))
                                     mapID = parts[3]
                                     mapID_list.append(mapID)
+                                    if not mat:
+                                        raise MemoryError(f"{mat = }")
+                                    nodeMaterial: c4d.NodeMaterial = mat.GetNodeMaterialReference()
+                                    graph: maxon.GraphModelRef = nodeMaterial.CreateDefaultGraph(rsNodeSpaceID)
+                                    
+                                    doc.InsertMaterial(mat)
+
+                                    result: list[maxon.GraphNode] = []
+                                    maxon.GraphModelHelper.FindNodesByAssetId(graph, outputNodeID, True, result)
+
+                                    outputNode: maxon.GraphNode = result[0]
+
+                                    with graph.BeginTransaction() as transaction:
+                                        # vlozeni texture node do node editoru pomoci AddChild
+                                        if mapID == "COL":
+                                            
+                                            # textureNode: maxon.GraphNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                            textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+
+                                            # pathPort: maxon.GraphNode = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                            pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                            pathPort.SetDefaultValue(maxon.Url(fullPath))
+
+                                            textureColorOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                            colorInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(colorInputPortInOutputNodeId)
+                                            textureColorOutPort.Connect(colorInputPortInOutputNode)
+                                            transaction.Commit()
+
+                                    c4d.EventAdd()
+
 
                                 doc.InsertMaterial(mat)
 
