@@ -1353,6 +1353,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             ############
 
                             # https://plugincafe.maxon.net/topic/14430/create-a-rs-standard-material-with-a-texture-node-connected-to-the-color-and-also-wired-up-to-a-color-splitter-that-it-is-connected-to-the-opacity?_=1693307452945&lang=cs
+                            # https://plugincafe.maxon.net/topic/14146/directly-create-redshift-standard-surface-for-rs-node-space
+                            # https://plugincafe.maxon.net/topic/14430/create-a-rs-standard-material-with-a-texture-node-connected-to-the-color-and-also-wired-up-to-a-color-splitter-that-it-is-connected-to-the-opacity?_=1693469676794&lang=cs
 
                             if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6403:
                                 
@@ -1374,6 +1376,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 # else:
                                 #     pass
                                 # mat[c4d.MATERIAL_PREVIEWSIZE] = 10
+                                
                                 count = 1
                                 for file in dir:
                                     fullPath = os.path.join(folder_path, file)
