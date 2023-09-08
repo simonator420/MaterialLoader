@@ -20,6 +20,7 @@ mapID_list = []
 file_names = []
 path = ""
 
+
 ID_CHECKBOX = 999
 ID_NAME = 998
 ID_OTHER = 997
@@ -1356,8 +1357,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             # https://plugincafe.maxon.net/topic/14146/directly-create-redshift-standard-surface-for-rs-node-space
                             # https://plugincafe.maxon.net/topic/14430/create-a-rs-standard-material-with-a-texture-node-connected-to-the-color-and-also-wired-up-to-a-color-splitter-that-it-is-connected-to-the-opacity?_=1693469676794&lang=cs
 
+                            
                             if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6403:
-                                
+                                colorlayerNode = None
+                                colorLayerAdded = False
                                 dir = os.listdir(folder_path)
                                 doc = c4d.documents.GetActiveDocument()
                                 renderData = doc.GetActiveRenderData()
@@ -1376,57 +1379,187 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 # else:
                                 #     pass
                                 # mat[c4d.MATERIAL_PREVIEWSIZE] = 10
-                                
-                                count = 1
-                                for file in dir:
-                                    fullPath = os.path.join(folder_path, file)
-                                    print("TOHLE JE FULLPATH", fullPath)
+                            
+                                # for file in dir:
+                                #     fullPath = os.path.join(folder_path, file)
+                                #     print("TOHLE JE FULLPATH", fullPath)
                                     # parts = file.split(".")[0].split("_")
                                     # mat.SetName("_".join(parts[0:3]))
                                     # mapID = parts[3]
                                     # mapID_list.append(mapID)
-                                    rsNodeSpaceID: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.class.nodespace")
 
-                                    outputNodeID: maxon.Id = maxon.Id(("com.redshift3d.redshift4c4d.nodes.core.standardmaterial"))
-                                    colorInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.base_color"
+                                rsNodeSpaceID: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.class.nodespace")
+                                outputNodeID: maxon.Id = maxon.Id(("com.redshift3d.redshift4c4d.nodes.core.standardmaterial"))
+                                
+                                colorInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.base_color"
+                                roughnessInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.refl_roughness"
+                                metalnessInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.metalness"
+                                opacityInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.opacity_color"
+                                subsurfaceInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.ms_color"
+                                sheenInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.sheen_color"
+                                sheenglossInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.sheen_roughness"
+                                bumpmapInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.bump_input"
+                                
+                                textureNodeID: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.nodes.core.texturesampler")
+                                textureNodePortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.texturesampler.tex0"
+                                textureNodePathPortID: maxon.String = "path"
+                                textureColorOutPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.texturesampler.outcolor"
 
-                                    textureNodeID: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.nodes.core.texturesampler")
-                                    textureNodePortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.texturesampler.tex0"
-                                    textureNodePathPortID: maxon.String = "path"
-                                    textureColorOutPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.texturesampler.outcolor"
+                                bumpNodeId: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.nodes.core.bumpmap")
+                                bumpInPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.bumpmap.input"
+                                bumpOutPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.bumpmap.out"
 
-                                    mat: c4d.BaseMaterial = c4d.BaseMaterial(c4d.Mmaterial)
+                                colorlayerNodeId: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.nodes.core.rscolorlayer")
+                                colorlayerColorInPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.rscolorlayer.base_color"
+                                colorlayerLayerOneInPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.rscolorlayer.layer1_color"
+                                colorlayerColorOutPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.rscolorlayer.outcolor"
+
+
+                                mat: c4d.BaseMaterial = c4d.BaseMaterial(c4d.Mmaterial)
+                                # parts = file.split(".")[0].split("_")
+                                # #mat.SetName("_".join(parts[0:3]))
+                                # mapID = parts[3]
+                                # mapID_list.append(mapID)
+                                if not mat:
+                                    raise MemoryError(f"{mat = }")
+                                nodeMaterial: c4d.NodeMaterial = mat.GetNodeMaterialReference()
+                                graph: maxon.GraphModelRef = nodeMaterial.CreateDefaultGraph(rsNodeSpaceID)
+                                
+                                doc.InsertMaterial(mat)
+                                result: list[maxon.GraphNode] = []
+                                maxon.GraphModelHelper.FindNodesByAssetId(graph, outputNodeID, True, result)
+                                if len(result) < 1:
+                                    raise RuntimeError("Could not find standard node in material.")
+                                outputNode: maxon.GraphNode = result[0]
+                                
+                                for file in dir:
                                     parts = file.split(".")[0].split("_")
-                                    mat.SetName("_".join(parts[0:3]))
+                                    # #mat.SetName("_".join(parts[0:3]))
                                     mapID = parts[3]
                                     mapID_list.append(mapID)
-                                    if not mat:
-                                        raise MemoryError(f"{mat = }")
-                                    nodeMaterial: c4d.NodeMaterial = mat.GetNodeMaterialReference()
-                                    graph: maxon.GraphModelRef = nodeMaterial.CreateDefaultGraph(rsNodeSpaceID)
-                                    
-                                    doc.InsertMaterial(mat)
-
-                                    result: list[maxon.GraphNode] = []
-                                    maxon.GraphModelHelper.FindNodesByAssetId(graph, outputNodeID, True, result)
-
-                                    outputNode: maxon.GraphNode = result[0]
-
+                                    fullPath = os.path.join(folder_path, file)
+                                    print("TOHLE JE FULLPATH", fullPath)
                                     with graph.BeginTransaction() as transaction:
                                         # vlozeni texture node do node editoru pomoci AddChild
-                                        if mapID == "COL":
-                                            
-                                            # textureNode: maxon.GraphNode = graph.AddChild(maxon.Id(), textureNodeID)
-                                            textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                        if mapID == "COL" or mapID == "AO":
+                                            if not loadAO or "AO" not in mapID_list:
+                                                textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                                # pathPort: maxon.GraphNode = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                                
+                                                pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                                pathPort.SetDefaultValue(maxon.Url(fullPath))
 
-                                            # pathPort: maxon.GraphNode = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                                textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                                colorInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(colorInputPortInOutputNodeId)
+                                                textureOutPort.Connect(colorInputPortInOutputNode)
+                                                transaction.Commit()    
+                                            elif mapID == "COL":
+                                                if colorLayerAdded == False:
+                                                    colorlayerNode = graph.AddChild(maxon.Id(), colorlayerNodeId)
+                                                    colorlayerOutPortNode: maxon.GraphNode = colorlayerNode.GetOutputs().FindChild(colorlayerColorOutPortID)
+                                                    colorlayerInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(colorInputPortInOutputNodeId)
+                                                    colorlayerOutPortNode.Connect(colorlayerInputPortInOutputNode)
+                                                    colorLayerAdded = True
+                                                textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                                pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                                pathPort.SetDefaultValue(maxon.Url(fullPath))
+                                                textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                                colorlayerColorInPort: maxon.GraphNode = colorlayerNode.GetInputs().FindChild(colorlayerColorInPortID)
+                                                textureOutPort.Connect(colorlayerColorInPort)
+                                                transaction.Commit()
+                                            elif mapID == "AO" and loadAO:
+                                                if colorLayerAdded == False:
+                                                    colorlayerNode = graph.AddChild(maxon.Id(), colorlayerNodeId)
+                                                    colorlayerOutPortNode: maxon.GraphNode = colorlayerNode.GetOutputs().FindChild(colorlayerColorOutPortID)
+                                                    colorlayerInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(colorInputPortInOutputNodeId)
+                                                    colorlayerOutPortNode.Connect(colorlayerInputPortInOutputNode)
+                                                    colorLayerAdded = True
+                                                textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                                pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                                pathPort.SetDefaultValue(maxon.Url(fullPath))
+                                                textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                                colorlayerLayerOneInPort: maxon.GraphNode = colorlayerNode.GetInputs().FindChild(colorlayerLayerOneInPortID)
+                                                textureOutPort.Connect(colorlayerLayerOneInPort)
+                                                transaction.Commit()
+                                            
+                                        
+                                        elif mapID == "ROUGH":
+                                            textureNode = graph.AddChild(maxon.Id(), textureNodeID)
                                             pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
                                             pathPort.SetDefaultValue(maxon.Url(fullPath))
-
-                                            textureColorOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
-                                            colorInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(colorInputPortInOutputNodeId)
-                                            textureColorOutPort.Connect(colorInputPortInOutputNode)
+                                            textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                            roughnessInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(roughnessInputPortInOutputNodeId)
+                                            textureOutPort.Connect(roughnessInputPortInOutputNode)
                                             transaction.Commit()
+                                        elif mapID == "METAL":
+                                            textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                            pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                            pathPort.SetDefaultValue(maxon.Url(fullPath))
+                                            textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                            metalnessInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(metalnessInputPortInOutputNodeId)
+                                            textureOutPort.Connect(metalnessInputPortInOutputNode)
+                                            transaction.Commit()
+                                        elif mapID == "OPAC":
+                                            textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                            pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                            pathPort.SetDefaultValue(maxon.Url(fullPath))
+                                            textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                            opacityInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(opacityInputPortInOutputNodeId)
+                                            textureOutPort.Connect(opacityInputPortInOutputNode)
+                                            transaction.Commit()
+                                        elif mapID == "SSS":
+                                            textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                            pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                            pathPort.SetDefaultValue(maxon.Url(fullPath))
+                                            textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                            subsurfaceInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(subsurfaceInputPortInOutputNodeId)
+                                            textureOutPort.Connect(subsurfaceInputPortInOutputNode)
+                                            transaction.Commit()
+                                        elif mapID == "SHEEN":
+                                            textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                            pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                            pathPort.SetDefaultValue(maxon.Url(fullPath))
+                                            textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                            sheenInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(sheenInputPortInOutputNodeId)
+                                            textureOutPort.Connect(sheenInputPortInOutputNode)
+                                            transaction.Commit()
+                                        elif mapID == "SHEENGLOSS":
+                                            textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                            pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                            pathPort.SetDefaultValue(maxon.Url(fullPath))
+                                            textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                            sheenglossInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(sheenglossInputPortInOutputNodeId)
+                                            textureOutPort.Connect(sheenglossInputPortInOutputNode)
+                                            transaction.Commit()
+                                        elif mapID == "NRM" and (not load16nrm or "NRM16" not in mapID_list):
+                                            bumpNode = graph.AddChild(maxon.Id(), bumpNodeId)
+                                            bumpOutPortNode: maxon.GraphNode = bumpNode.GetOutputs().FindChild(bumpOutPortID)
+                                            bumpmapInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(bumpmapInputPortInOutputNodeId)
+                                            bumpOutPortNode.Connect(bumpmapInputPortInOutputNode)
+                                            textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                            pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                            pathPort.SetDefaultValue(maxon.Url(fullPath))
+                                            textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                            bumpmapInputPortInOutputNode : maxon.GraphNode = bumpNode.GetInputs().FindChild(bumpInPortID)
+                                            textureOutPort.Connect(bumpmapInputPortInOutputNode)
+                                            transaction.Commit()
+                                        
+                                        elif mapID == "NRM16" and load16nrm:
+                                            bumpNode = graph.AddChild(maxon.Id(), bumpNodeId)
+                                            bumpOutPortNode: maxon.GraphNode = bumpNode.GetOutputs().FindChild(bumpOutPortID)
+                                            bumpmapInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(bumpmapInputPortInOutputNodeId)
+                                            bumpOutPortNode.Connect(bumpmapInputPortInOutputNode)
+                                            textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                            pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                            pathPort.SetDefaultValue(maxon.Url(fullPath))
+                                            textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                            bumpmapInputPortInOutputNode : maxon.GraphNode = bumpNode.GetInputs().FindChild(bumpInPortID)
+                                            textureOutPort.Connect(bumpmapInputPortInOutputNode)
+                                            transaction.Commit()
+
+
+                                         # elif mapID == "NRM16": # and load16nrm:
+
 
                                     c4d.EventAdd()
 
@@ -1583,6 +1716,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullPath, c4d.DESCFLAGS_SET_NONE)
                 mat.InsertShader(bitmap)
                 mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_METALLIC_MODE_TEXTURE, bitmap, c4d.DESCFLAGS_SET_NONE)
+            
 
         doc = c4d.documents.GetActiveDocument()
         doc.StartUndo()
