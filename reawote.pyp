@@ -23,32 +23,32 @@ class CommandThread(c4d.threading.C4DThread):
             sys.path.append(src)
         import reawotefileloader as ReawoteFileLoader
 
-        sock = socket.socket()
-        sock.connect(("localhost", REAWOTE_APP_PORT))
-        sock.send("{\"type\": \"registerPlugin\", \"data\": {\"plugin\": \"cinema4d\", \"fullName\": \"Cinema4D - Corona renderer\"}}".encode())
-        while True:
-            if self.TestBreak():
-                print("Canceled thread-execution.")
-                return
-            msg = sock.recv(512)
-            if len(msg) > 0:
-                print(str(msg))
-                c4d.StatusSetText("Reawote plugin is running" + msg.decode())
-                data=json.loads(msg)
-                if data["type"] == "loadMaterial":
-                    newpath=data["data"]["path"]
-                    print("Path is: " + newpath)
-                    if (len(newpath)) > 0:
-                        texturepath = newpath
-                        print("TEXTUREPATH WAS SET: " + texturepath)
-                    c4d.SpecialEventAdd(REAWOTE_PLUGIN_ID)
-            # Tohle nefunguje, jako dalsi krok je tady potreba vyvolat udalost, ktera se preda do hlavniho vlakna
-            # https://developers.maxon.net/docs/Cinema4DCPPSDK/html/page_manual_cinemathreads.html
-            # https://plugincafe.maxon.net/topic/10739/14183_creating-custom-callback/3
-            # https://developers.maxon.net/docs/Cinema4DPythonSDK/html/modules/c4d.documents/BaseDocument/index.html#BaseDocument.InsertMaterial
-            # https://developers.maxon.net/docs/Cinema4DPythonSDK/html/modules/c4d.threading/index.html
+        # sock = socket.socket()
+        # sock.connect(("localhost", REAWOTE_APP_PORT))
+        # sock.send("{\"type\": \"registerPlugin\", \"data\": {\"plugin\": \"cinema4d\", \"fullName\": \"Cinema4D - Corona renderer\"}}".encode())
+        # while True:
+        #     if self.TestBreak():
+        #         print("Canceled thread-execution.")
+        #         return
+        #     msg = sock.recv(512)
+        #     if len(msg) > 0:
+        #         print(str(msg))
+        #         c4d.StatusSetText("Reawote plugin is running" + msg.decode())
+        #         data=json.loads(msg)
+        #         if data["type"] == "loadMaterial":
+        #             newpath=data["data"]["path"]
+        #             print("Path is: " + newpath)
+        #             if (len(newpath)) > 0:
+        #                 texturepath = newpath
+        #                 print("TEXTUREPATH WAS SET: " + texturepath)
+        #             c4d.SpecialEventAdd(REAWOTE_PLUGIN_ID)
+        #     # Tohle nefunguje, jako dalsi krok je tady potreba vyvolat udalost, ktera se preda do hlavniho vlakna
+        #     # https://developers.maxon.net/docs/Cinema4DCPPSDK/html/page_manual_cinemathreads.html
+        #     # https://plugincafe.maxon.net/topic/10739/14183_creating-custom-callback/3
+        #     # https://developers.maxon.net/docs/Cinema4DPythonSDK/html/modules/c4d.documents/BaseDocument/index.html#BaseDocument.InsertMaterial
+        #     # https://developers.maxon.net/docs/Cinema4DPythonSDK/html/modules/c4d.threading/index.html
 
-            time.sleep(30)
+        #     time.sleep(30)
         c4d.StatusClear()
 
 class TimerMessage(c4d.plugins.MessageData):
@@ -85,7 +85,7 @@ if __name__=='__main__':
         str="Reawote PBR Loader",
         help="HELP",
         dat=loader, 
-        info=PLUGINFLAG_COMMAND_OPTION_DIALOG, 
+        info=0, 
         icon=icon)
     
     loader.thread.Start()

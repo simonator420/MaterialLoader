@@ -540,8 +540,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
     
         self.GroupBegin(ID.DIALOG_SCROLL_GROUP, c4d.BFH_SCALEFIT, 2, 1, "Material folder", 0, 10, 10)
         self.GroupEnd()
-        self.GroupEnd(ID.DIALOG_MAIN_GROUP)
-        self.GroupEnd(ID.DIALOG_SCROLL_GROUP)
+        self.GroupEnd()
+        self.GroupEnd()
+        # self.GroupEnd(ID.DIALOG_MAIN_GROUP)
+        # self.GroupEnd(ID.DIALOG_SCROLL_GROUP)
         self.Reset()
 
         color = c4d.Vector(1, 0, 0)
@@ -632,6 +634,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
             for root, dirs, files in os.walk(path):
                 for dir in dirs:
                     if dir in targetFolders:
+                        print(dir)
                         same_path_dirs.append(os.path.join(root, dir))
             print("Tohle jsou same_path_dirs: ", same_path_dirs)
 
@@ -940,6 +943,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
             path_list.clear()
             path_lists.clear()
             checkbox_list.clear()
+            mapID_list.clear()
             self._treegui.Refresh()
             self.Reset()
 
@@ -1390,7 +1394,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
                                 rsNodeSpaceID: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.class.nodespace")
                                 outputNodeID: maxon.Id = maxon.Id(("com.redshift3d.redshift4c4d.nodes.core.standardmaterial"))
-                                
+                                displacementNodeID: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.nodes.core.displacement")
+
+                                displacementTexMapInputPortNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.displacement.texmap"
+                                displacementOutPortId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.displacement.out"
+
                                 colorInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.base_color"
                                 roughnessInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.refl_roughness"
                                 metalnessInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.metalness"
@@ -1400,6 +1408,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 sheenglossInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.sheen_roughness"
                                 bumpmapInputPortInOutputNodeId: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.standardmaterial.bump_input"
                                 
+
                                 textureNodeID: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.nodes.core.texturesampler")
                                 textureNodePortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.texturesampler.tex0"
                                 textureNodePathPortID: maxon.String = "path"
@@ -1408,18 +1417,18 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 bumpNodeId: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.nodes.core.bumpmap")
                                 bumpInPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.bumpmap.input"
                                 bumpOutPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.bumpmap.out"
+                                bumpTypeInPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.bumpmap.inputtype"
 
                                 colorlayerNodeId: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.nodes.core.rscolorlayer")
                                 colorlayerColorInPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.rscolorlayer.base_color"
                                 colorlayerLayerOneInPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.rscolorlayer.layer1_color"
+                                colorlayerLayerOneBlendModeInPortID : maxon.String = "com.redshift3d.redshift4c4d.nodes.core.rscolorlayer.layer1_blend_mode"
                                 colorlayerColorOutPortID: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.rscolorlayer.outcolor"
-
 
                                 mat: c4d.BaseMaterial = c4d.BaseMaterial(c4d.Mmaterial)
                                 # parts = file.split(".")[0].split("_")
-                                # #mat.SetName("_".join(parts[0:3]))
-                                # mapID = parts[3]
-                                # mapID_list.append(mapID)
+                                mat.SetName(checkbox)
+                                mat[c4d.MATERIAL_PREVIEWSIZE] = 10
                                 if not mat:
                                     raise MemoryError(f"{mat = }")
                                 nodeMaterial: c4d.NodeMaterial = mat.GetNodeMaterialReference()
@@ -1431,10 +1440,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 if len(result) < 1:
                                     raise RuntimeError("Could not find standard node in material.")
                                 outputNode: maxon.GraphNode = result[0]
-                                
+                                mapID_list.clear()
                                 for file in dir:
+                                    print(f"Tohle je mapID_list", mapID_list)
                                     parts = file.split(".")[0].split("_")
-                                    # #mat.SetName("_".join(parts[0:3]))
                                     mapID = parts[3]
                                     mapID_list.append(mapID)
                                     fullPath = os.path.join(folder_path, file)
@@ -1475,13 +1484,17 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                                     colorlayerOutPortNode.Connect(colorlayerInputPortInOutputNode)
                                                     colorLayerAdded = True
                                                 textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                                blendPort = colorlayerNode.GetInputs().FindChild("Blend Mode")
+                                                print(f"Tohle je blendPort: ", blendPort)
                                                 pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
                                                 pathPort.SetDefaultValue(maxon.Url(fullPath))
                                                 textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
                                                 colorlayerLayerOneInPort: maxon.GraphNode = colorlayerNode.GetInputs().FindChild(colorlayerLayerOneInPortID)
+                                                colorlayerLayerOneBlendModeInPort: maxon.GraphNode = colorlayerNode.GetInputs().FindChild(colorlayerLayerOneBlendModeInPortID)
+                                                colorlayerLayerOneBlendModeInPort.SetDefaultValue(4)
+                                                print(f"Tohle je BlendMode Port:", colorlayerLayerOneBlendModeInPort)
                                                 textureOutPort.Connect(colorlayerLayerOneInPort)
                                                 transaction.Commit()
-                                            
                                         
                                         elif mapID == "ROUGH":
                                             textureNode = graph.AddChild(maxon.Id(), textureNodeID)
@@ -1531,7 +1544,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             sheenglossInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(sheenglossInputPortInOutputNodeId)
                                             textureOutPort.Connect(sheenglossInputPortInOutputNode)
                                             transaction.Commit()
-                                        elif mapID == "NRM" and (not load16nrm or "NRM16" not in mapID_list):
+                                        elif mapID == "NRM" and (not load16nrm and "NRM16" not in mapID_list):
                                             bumpNode = graph.AddChild(maxon.Id(), bumpNodeId)
                                             bumpOutPortNode: maxon.GraphNode = bumpNode.GetOutputs().FindChild(bumpOutPortID)
                                             bumpmapInputPortInOutputNode : maxon.GraphNode = outputNode.GetInputs().FindChild(bumpmapInputPortInOutputNodeId)
@@ -1541,6 +1554,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             pathPort.SetDefaultValue(maxon.Url(fullPath))
                                             textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
                                             bumpmapInputPortInOutputNode : maxon.GraphNode = bumpNode.GetInputs().FindChild(bumpInPortID)
+                                            bumpmapTypeInputPortInOutputNode: maxon.GraphNode = bumpNode.GetInputs().FindChild(bumpTypeInPortID)
+                                            bumpmapTypeInputPortInOutputNode.SetDefaultValue(1)
                                             textureOutPort.Connect(bumpmapInputPortInOutputNode)
                                             transaction.Commit()
                                         
@@ -1554,9 +1569,32 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             pathPort.SetDefaultValue(maxon.Url(fullPath))
                                             textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
                                             bumpmapInputPortInOutputNode : maxon.GraphNode = bumpNode.GetInputs().FindChild(bumpInPortID)
+                                            bumpmapTypeInputPortInOutputNode: maxon.GraphNode = bumpNode.GetInputs().FindChild(bumpTypeInPortID)
+                                            bumpmapTypeInputPortInOutputNode.SetDefaultValue(1)
                                             textureOutPort.Connect(bumpmapInputPortInOutputNode)
                                             transaction.Commit()
+                                        
+                                        elif mapID == "DISP":
+                                            displacementNode = graph.AddChild(maxon.Id(), displacementNodeID)
+                                            displacementOutPortNode: maxon.GraphNode = displacementNode.GetOutputs().FindChild(displacementOutPortId)
 
+                                            
+                                            nodeMaterial = mat.GetNodeMaterialReference()
+                                            nodespaceId = maxon.Id("com.redshift3d.redshift4c4d.class.nodespace")
+                                            nimbusRef = mat.GetNimbusRef(nodespaceId)
+                                            graph = nimbusRef.GetGraph()
+                                            endNodePath = nimbusRef.GetPath(maxon.NIMBUS_PATH.MATERIALENDNODE)
+                                            endNode = graph.GetNode(endNodePath)
+                                            toKamStrcit = endNode.GetInputs().FindChild("com.redshift3d.redshift4c4d.node.output.displacement")
+                                            displacementOutPortNode.Connect(toKamStrcit)
+                                            
+                                            textureNode = graph.AddChild(maxon.Id(), textureNodeID)
+                                            pathPort = textureNode.GetInputs().FindChild(textureNodePortID).FindChild(textureNodePathPortID)
+                                            pathPort.SetDefaultValue(maxon.Url(fullPath))
+                                            textureOutPort: maxon.GraphNode = textureNode.GetOutputs().FindChild(textureColorOutPortID)
+                                            texMapInputPortInOutputNode: maxon.GraphNode = displacementNode.GetInputs().FindChild(displacementTexMapInputPortNodeId)
+                                            textureOutPort.Connect(texMapInputPortInOutputNode)
+                                            transaction.Commit()
 
                                          # elif mapID == "NRM16": # and load16nrm:
 
