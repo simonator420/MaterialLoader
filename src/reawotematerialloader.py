@@ -349,6 +349,12 @@ class ID():
 
     REDSHIFT_MATERIAL = 1036219
 
+    OCTANE_MATERIAL = 1029501
+    OCTANE_BSDF_MODEL = 2585
+    OCTANE_BITMAP = 5833
+    OCTANE_TEXTURE = 1029508
+    OCTANE_MULTIPLY = 1029516
+
 class TextureObject(object):
     texturePath = "TexPath"
     otherData = "OtherData"
@@ -505,6 +511,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         corona = self.AddChild(renderers, 6401, "Corona")
         vray = self.AddChild(renderers, 6402, "V-ray")
         redshift = self.AddChild(renderers, 6403, "Redshift")
+        octane = self.AddChild(renderers, 6404, "Octane")
         self.GroupEnd()
 
         self.AddEditText(ID.DIALOG_FOLDER_LIST,  c4d.BFH_SCALEFIT, inith=10, initw=50)
@@ -1248,6 +1255,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 dir = os.listdir(folder_path)
                                 mat[c4d.VRAY_SETTINGS_MATERIAL_PREVIEW_OVERRIDE] = True
                                 mat[c4d.VRAY_SETTINGS_MATERIAL_PREVIEW_VIEWPORT_SIZE] = 10
+                                
                                 for file in dir:
                                     fullPath = os.path.join(folder_path, file)
                                     print("TOHLE JE FULLPATH", fullPath)
@@ -1642,6 +1650,61 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     c4d.EventAdd()
 
                                 doc.InsertMaterial(mat)
+                            
+                            ##########
+                            # Octane #
+                            ##########
+                            
+                            if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6404:
+                                doc = c4d.documents.GetActiveDocument()
+                                dir = os.listdir(folder_path)
+                                bitmap = c4d.BaseShader(ID.OCTANE_TEXTURE)
+                                mat = c4d.BaseMaterial(ID.OCTANE_MATERIAL)
+                                mat[c4d.OCT_MATERIAL_TYPE] = 2516
+                                mat[ID.OCTANE_BSDF_MODEL] = 2
+                                mat[c4d.OCT_MATERIAL_PREVIEWSIZE] = 10
+                                mat.SetName(checkbox)
+
+                                multiply_loaded = False
+                                multiply = None
+                                
+                                for file in dir:
+                                    fullPath = os.path.join(folder_path, file)
+                                    print("TOHLE JE FULLPATH", fullPath)
+                                    parts = file.split(".")[0].split("_")
+                                    mat.SetName("_".join(parts[0:3]))
+                                    mapID = parts[3]
+                                    mapID_list.append(mapID)
+                                
+                                    if mapID == "COL": # same functionality as VRAY
+                                        if not loadAO or "AO" not in mapID_list:
+                                            bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
+                                            mat.InsertShader(bitmap)
+                                            mat[c4d.OCT_MATERIAL_DIFFUSE_LINK] = bitmap
+                                        else:
+                                            bitmap = c4d.BaseShader(ID.OCTANE_TEXTURE)
+                                            if multiply_loaded == False:
+                                                multiply = c4d.BaseShader(ID.OCTANE_MULTIPLY)
+                                                mat.InsertShader(multiply)
+                                                multiply_loaded = True
+                                            multiply[c4d.MULTIPLY_TEXTURE1] = bitmap
+                                            bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
+                                            mat.InsertShader(bitmap)  
+                                            mat[c4d.OCT_MATERIAL_DIFFUSE_LINK] = multiply
+                                    
+                                    elif loadAO and mapID == "AO":
+                                        bitmap = c4d.BaseShader(ID.OCTANE_TEXTURE)
+                                        if multiply_loaded == False:
+                                            multiply = c4d.BaseShader(ID.OCTANE_MULTIPLY)
+                                            mat.InsertShader(multiply)
+                                            multiply_loaded = True
+                                        multiply[c4d.MULTIPLY_TEXTURE2] = bitmap
+                                        bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.OCT_MATERIAL_DIFFUSE_LINK] = multiply
+
+                                doc.InsertMaterial(mat)
+                                
 
                 elif len(active_checkbox_list) == 0:
                     self.SetError("No materials were selected.")
