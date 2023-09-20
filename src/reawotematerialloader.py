@@ -354,6 +354,7 @@ class ID():
     OCTANE_BITMAP = 5833
     OCTANE_TEXTURE = 1029508
     OCTANE_MULTIPLY = 1029516
+    OCTANE_DISPLACEMENT = 1031901
 
 class TextureObject(object):
     texturePath = "TexPath"
@@ -1569,6 +1570,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             
                                             transaction.Commit()
                                         
+                                        # je tohle spravne?
                                         elif mapID == "NRM" and (not load16nrm and "NRM16" not in mapID_list):
                                             bumpNode = graph.AddChild(maxon.Id(), bumpNodeId)
                                             bumpOutPortNode: maxon.GraphNode = bumpNode.GetOutputs().FindChild(bumpOutPortID)
@@ -1702,6 +1704,76 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
                                         mat.InsertShader(bitmap)
                                         mat[c4d.OCT_MATERIAL_DIFFUSE_LINK] = multiply
+                                    
+                                    elif mapID == "ROUGH":
+                                        bitmap = c4d.BaseShader(ID.OCTANE_TEXTURE)
+                                        bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
+                                        bitmap[c4d.IMAGETEXTURE_GAMMA] = 1.0
+                                        bitmap[c4d.IMAGETEXTURE_MODE] = 1
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.OCT_MATERIAL_ROUGHNESS_LINK] = bitmap
+
+                                    elif mapID == "NRM" and (not load16nrm or "NRM16" not in mapID_list):
+                                        bitmap = c4d.BaseShader(ID.OCTANE_TEXTURE)
+                                        bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.OCT_MATERIAL_NORMAL_LINK] = bitmap
+                                        
+                                    elif mapID == "NRM16" and load16nrm:
+                                        bitmap = c4d.BaseShader(ID.OCTANE_TEXTURE)
+                                        bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.OCT_MATERIAL_NORMAL_LINK] = bitmap
+                                    
+                                    elif mapID == "DISP" and (not load16bdispl or "DISP16" not in mapID_list) and loadDispl:
+                                        bitmap = c4d.BaseShader(ID.OCTANE_TEXTURE)
+                                        displacement = c4d.BaseShader(ID.OCTANE_DISPLACEMENT)
+                                        displacement[c4d.DISPLACEMENT_AMOUNT] = 1.0
+                                        displacement[c4d.DISPLACEMENT_LEVELOFDETAIL] = 10
+                                        displacement[c4d.DISPLACEMENT_TEXTURE] = bitmap
+                                        bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
+                                        bitmap[c4d.IMAGETEXTURE_GAMMA] = 1.0
+                                        bitmap[c4d.IMAGETEXTURE_MODE] = 1
+                                        mat.InsertShader(displacement)
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.OCT_MATERIAL_DISPLACEMENT_LINK] = displacement
+                                    
+                                    elif mapID == "DISP16" and load16bdispl:
+                                        bitmap = c4d.BaseShader(ID.OCTANE_TEXTURE)
+                                        displacement = c4d.BaseShader(ID.OCTANE_DISPLACEMENT)
+                                        displacement[c4d.DISPLACEMENT_AMOUNT] = 1.0
+                                        displacement[c4d.DISPLACEMENT_LEVELOFDETAIL] = 10
+                                        displacement[c4d.DISPLACEMENT_TEXTURE] = bitmap
+                                        bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
+                                        bitmap[c4d.IMAGETEXTURE_GAMMA] = 1.0
+                                        bitmap[c4d.IMAGETEXTURE_MODE] = 1
+                                        mat.InsertShader(displacement)
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.OCT_MATERIAL_DISPLACEMENT_LINK] = displacement
+                                    
+                                    elif mapID == "OPAC":
+                                        bitmap = c4d.BaseShader(ID.OCTANE_TEXTURE)
+                                        bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
+                                        bitmap[c4d.IMAGETEXTURE_GAMMA] = 1.0
+                                        bitmap[c4d.IMAGETEXTURE_MODE] = 1
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.OCT_MATERIAL_OPACITY_LINK] = bitmap
+                                    
+                                    elif mapID == "METAL":
+                                        bitmap = c4d.BaseShader(ID.OCTANE_TEXTURE)
+                                        bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
+                                        bitmap[c4d.IMAGETEXTURE_GAMMA] = 1.0
+                                        bitmap[c4d.IMAGETEXTURE_MODE] = 1
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.OCT_MAT_SPECULAR_MAP_LINK] = bitmap
+
+                                    elif mapID == "SHEEN":
+                                        bitmap = c4d.BaseShader(ID.OCTANE_TEXTURE)
+                                        bitmap[c4d.IMAGETEXTURE_FILE] = fullPath
+                                        mat.InsertShader(bitmap)
+                                        mat[c4d.OCT_MAT_SHEEN_LINK] = bitmap
+
+
 
                                 doc.InsertMaterial(mat)
                                 
