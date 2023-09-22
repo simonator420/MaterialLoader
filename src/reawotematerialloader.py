@@ -956,6 +956,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 bitmap = c4d.BaseShader(c4d.Xbitmap)
                                 fusion_shader = None
                                 dir = os.listdir(folder_path)
+                                mapID_list.clear()
                                 # tex folder
                                 for file in dir:
                                     # skip the file that starts with .
@@ -1030,7 +1031,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             mat[base + c4d.REFLECTION_LAYER_MAIN_VALUE_ROUGHNESS] = 100
                                             mat[base + c4d.REFLECTION_LAYER_MAIN_SHADER_ROUGHNESS] = rough_shader
 
-                                    elif mapID == "DISP" and (not load_16displ or "DISP16" not in mapID_list):
+                                    elif mapID == "DISP" and (not load_16displ or "DISP16" not in mapID_list) and load_displ:
                                         disp_shader = c4d.BaseShader(c4d.Xbitmap)
                                         disp_shader[c4d.BITMAPSHADER_FILENAME] = fullpath
                                         mat[c4d.MATERIAL_DISPLACEMENT_SHADER] = disp_shader
@@ -1038,7 +1039,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         mat.InsertShader(disp_shader)
                                         mat[c4d.MATERIAL_USE_DISPLACEMENT] = True
 
-                                    elif mapID == "DISP16" in file:
+                                    elif mapID == "DISP16" in file and load_displ:
                                         disp_shader = c4d.BaseShader(c4d.Xbitmap)
                                         disp_shader[c4d.BITMAPSHADER_FILENAME] = fullpath
                                         mat[c4d.MATERIAL_DISPLACEMENT_SHADER] = disp_shader
@@ -1065,6 +1066,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_BASE_IOR_VALUE, 1.56, c4d.DESCFLAGS_SET_NONE)
                                 fusion_shader = None
                                 dir = os.listdir(folder_path)
+                                mapID_list.clear()
 
                                 displ_loaded = False
                                 nrm_loaded = False
@@ -1243,6 +1245,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 mat = c4d.BaseMaterial(ID.VRAY_MATERIAL)
                                 fusion_shader = None
                                 dir = os.listdir(folder_path)
+                                mapID_list.clear()
                                 mat[c4d.VRAY_SETTINGS_MATERIAL_PREVIEW_OVERRIDE] = True
                                 mat[c4d.VRAY_SETTINGS_MATERIAL_PREVIEW_VIEWPORT_SIZE] = 10
                                 
