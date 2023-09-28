@@ -611,7 +611,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
     def GetFileAssetUrl(path: str) -> maxon.Url:
         return maxon.Url(path)
-    
+        
     def Command(self, id, msg,):
 
         if id == ID.DIALOG_FOLDER_BUTTON:
@@ -820,7 +820,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                         self.SetError("")
                     else:
                         self.SetError("One or more folders do not contain the correct Reawote material.")
-                        print(f"{folder} does not contain right folder.")
                 self.Enable(ID.DIALOG_LIST_BUTTON, True)
                 self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
                 self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
@@ -907,7 +906,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             self.SetError("")
                         else:
                             self.SetError("One or more folders do not contain the correct Reawote material.")
-                            print(folder, " neobsahuje spravnou slozku")
                     self.Enable(ID.DIALOG_LIST_BUTTON, True)
                     self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
                     self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
@@ -915,7 +913,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     self.Enable(ID.DIALOG_CLEAN_BUTTON, True)
                 active_checkbox_list = []
                 self._treegui.Refresh()
-                print(f"Tohle je checkboxlist: {checkbox_list}")
         
         if id == ID.DIALOG_CLEAN_BUTTON:
             self._listView.listOfTexture.clear()
@@ -950,7 +947,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             ############    
 
                             if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6400:
-
                                 mat = c4d.BaseMaterial(c4d.Mmaterial)
                                 mat[c4d.MATERIAL_PREVIEWSIZE] = 10
                                 bitmap = c4d.BaseShader(c4d.Xbitmap)
@@ -958,15 +954,22 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 dir = os.listdir(folder_path)
                                 mapID_list.clear()
                                 # tex folder
+                                
                                 for file in dir:
-                                    # skip the file that starts with .
+                                    if not file[0].isalpha():
+                                        continue
+                                    parts = file.split(".")[0].split("_")
+                                    mapID = parts[3]   
+                                    mapID_list.append(mapID)
+
+                                for file in dir:
                                     if not file[0].isalpha():
                                         continue
                                     fullpath = os.path.join(folder_path, file)
+                                    print(f"MapID list: {mapID_list}")
                                     parts = file.split(".")[0].split("_")
+                                    mat.SetName("_".join(parts[0:3]))
                                     mapID = parts[3]
-                                    mat.SetName("_".join(parts[0:3]))    
-                                    mapID_list.append(mapID)
 
                                     if mapID == "COL" or mapID == "COLOR":
                                         if not load_AO or "AO" not in mapID_list:
@@ -1072,15 +1075,20 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 nrm_loaded = False
 
                                 for file in dir:
-                                    # skip the file that starts with .
+                                    if not file[0].isalpha():
+                                        continue
+                                    parts = file.split(".")[0].split("_")
+                                    mapID = parts[3]   
+                                    mapID_list.append(mapID)
+
+                                for file in dir:
                                     if not file[0].isalpha():
                                         continue
                                     fullpath = os.path.join(folder_path, file)
-                                    print("Type of fullpath: ", type(fullpath))
+                                    print(f"MapID list: {mapID_list}")
                                     parts = file.split(".")[0].split("_")
+                                    mat.SetName("_".join(parts[0:3]))
                                     mapID = parts[3]
-                                    print(mapID)
-                                    mapID_list.append(mapID)
 
                                     if mapID == "COL" or mapID == "COLOR":
                                         mat.SetName("_".join(parts[0:3]))
@@ -1183,7 +1191,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
                                     elif load_16nrm and mapID == "NRM16" or mapID == "NRM":
                                         if mapID == "NRM16":
-                                            print("Proslo NRM16")
                                             bitmap = c4d.BaseShader(c4d.Xbitmap)
                                             bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullpath, c4d.DESCFLAGS_SET_NONE)
                                             texture = c4d.BaseShader(ID.PLUGINID_CORONA4D_NORMALSHADER)
@@ -1196,7 +1203,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_BASE_BUMPMAPPING_TEXTURE, texture, c4d.DESCFLAGS_SET_NONE)
                                             nrm_loaded = True
                                         elif mapID == "NRM" and nrm_loaded == False:
-                                            print("Proslo NRM")
                                             bitmap = c4d.BaseShader(c4d.Xbitmap)
                                             bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullpath, c4d.DESCFLAGS_SET_NONE)
                                             texture = c4d.BaseShader(ID.PLUGINID_CORONA4D_NORMALSHADER)
@@ -1210,7 +1216,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
                                     elif load_displ and load_16displ and mapID == "DISP16" or mapID == "DISP":
                                         if mapID == "DISP16":
-                                            print("Proslo DISP16")
                                             bitmap = c4d.BaseShader(c4d.Xbitmap)
                                             bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullpath, c4d.DESCFLAGS_SET_NONE)
                                             mat.InsertShader(bitmap)
@@ -1220,7 +1225,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_DISPLACEMENT_MAX_LEVEL, 1, c4d.DESCFLAGS_SET_NONE)
                                             displ_loaded = True
                                         elif mapID == "DISP" and load_displ and displ_loaded == False:
-                                            print("Proslo DISP")
                                             bitmap = c4d.BaseShader(c4d.Xbitmap)
                                             bitmap.SetParameter(c4d.BITMAPSHADER_FILENAME, fullpath, c4d.DESCFLAGS_SET_NONE)
                                             mat.InsertShader(bitmap)
@@ -1250,15 +1254,20 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 mat[c4d.VRAY_SETTINGS_MATERIAL_PREVIEW_VIEWPORT_SIZE] = 10
                                 
                                 for file in dir:
-                                    # skip the file that starts with .
+                                    if not file[0].isalpha():
+                                        continue
+                                    parts = file.split(".")[0].split("_")
+                                    mapID = parts[3]   
+                                    mapID_list.append(mapID)
+
+                                for file in dir:
                                     if not file[0].isalpha():
                                         continue
                                     fullpath = os.path.join(folder_path, file)
-                                    print("TOHLE JE fullpath", fullpath)
+                                    print(f"MapID list: {mapID_list}")
                                     parts = file.split(".")[0].split("_")
                                     mat.SetName("_".join(parts[0:3]))
                                     mapID = parts[3]
-                                    mapID_list.append(mapID)
 
                                     if mapID == "COL":
                                         if not load_AO or "AO" not in mapID_list:
@@ -1364,8 +1373,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6403:
                                 color_layer_node = None
                                 color_layer_added = False
-                                includes_nrm16 = False
-                                includes_disp16 = False
                                 dir = os.listdir(folder_path)
                                 doc = c4d.documents.GetActiveDocument()
                                 render_data = doc.GetActiveRenderData()
@@ -1421,28 +1428,27 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     raise RuntimeError("Could not find standard node in material.")
                                 output_node: maxon.GraphNode = result[0]
                                 mapID_list.clear()
-                                for n in dir:
-                                    if "NRM16" in n:
-                                        includes_nrm16 = True
-                                    elif "DISP16" in n:
-                                        includes_disp16 = True
+                                        
                                 for file in dir:
                                     if not file[0].isalpha():
                                         continue
-                                    print(f"Tohle je mapID_list", mapID_list)
+                                    parts = file.split(".")[0].split("_")
+                                    mapID = parts[3]   
+                                    mapID_list.append(mapID)
+
+                                for file in dir:
+                                    if not file[0].isalpha():
+                                        continue
+                                    print(f"MapID list: {mapID_list}")
                                     parts = file.split(".")[0].split("_")
                                     mapID = parts[3]
-                                    mapID_list.append(mapID)
                                     fullpath = os.path.join(folder_path, file)
-                                    print("TOHLE JE fullpath", fullpath)
-                                    print(f"Tohle je DIR: {dir}")
+                                    
                                     with graph.BeginTransaction() as transaction:
-                                        # vlozeni texture node do node editoru pomoci AddChild
                                         
                                         if mapID == "COL" or mapID == "AO":
                                             if mapID == "COL" and (not load_AO or "AO" not in mapID_list):
                                                 texture_node = graph.AddChild(maxon.Id(), texture_node_id)
-                                                # path_port: maxon.GraphNode = texture_node.GetInputs().FindChild(texture_node_port_id).FindChild(texture_nodepath_port_id)
                                                 
                                                 path_port = texture_node.GetInputs().FindChild(texture_node_port_id).FindChild(texture_nodepath_port_id)
                                                 path_port.SetDefaultValue(maxon.Url(fullpath))
@@ -1551,7 +1557,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             
                                             transaction.Commit()
 
-                                        elif mapID == "NRM" and (not load_16nrm or includes_nrm16 == False):
+                                        elif mapID == "NRM" and (not load_16nrm or "NRM16" not in mapID_list):
                                             bump_node = graph.AddChild(maxon.Id(), bump_node_id)
                                             bump_out_port_node: maxon.GraphNode = bump_node.GetOutputs().FindChild(bump_out_port_id)
                                             bumpmap_input_port_in_output_node : maxon.GraphNode = output_node.GetInputs().FindChild(bumpmap_input_port_in_output_node_id)
@@ -1585,7 +1591,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
                                             transaction.Commit()
                                         
-                                        elif mapID == "DISP" and (not load_16displ or includes_disp16 == False):
+                                        elif mapID == "DISP" and (not load_16displ or "DISP16" not in mapID_list) and load_displ:
                                             displacement_node = graph.AddChild(maxon.Id(), displacement_node_id)
                                             displacementOutPortNode: maxon.GraphNode = displacement_node.GetOutputs().FindChild(displacement_out_port_id)
 
@@ -1607,7 +1613,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
                                             transaction.Commit()
 
-                                        elif mapID == "DISP16" and load_16displ:
+                                        elif mapID == "DISP16" and load_16displ and load_displ:
                                             displacement_node = graph.AddChild(maxon.Id(), displacement_node_id)
                                             displacementOutPortNode: maxon.GraphNode = displacement_node.GetOutputs().FindChild(displacement_out_port_id)
 
@@ -1651,16 +1657,20 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 multiply = None
                                 
                                 for file in dir:
-                                    # skip the file that starts with .
                                     if not file[0].isalpha():
                                         continue
-                                    print(f"tohle je mapidlist {mapID_list}")
-                                    fullpath = os.path.join(folder_path, file)
-                                    print("TOHLE JE fullpath", fullpath)
                                     parts = file.split(".")[0].split("_")
-                                    # mat.SetName("_".join(parts[0:3]))
-                                    mapID = parts[3]
+                                    mapID = parts[3]   
                                     mapID_list.append(mapID)
+
+                                for file in dir:
+                                    if not file[0].isalpha():
+                                        continue
+                                    fullpath = os.path.join(folder_path, file)
+                                    print(f"MapID list: {mapID_list}")
+                                    parts = file.split(".")[0].split("_")
+                                    mat.SetName("_".join(parts[0:3]))
+                                    mapID = parts[3]
                                 
                                     if mapID == "COL":
                                         if not load_AO or "AO" not in mapID_list:
@@ -1757,8 +1767,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         bitmap[c4d.IMAGETEXTURE_FILE] = fullpath
                                         mat.InsertShader(bitmap)
                                         mat[c4d.OCT_MAT_SHEEN_LINK] = bitmap
-
-
 
                                 doc.InsertMaterial(mat)
                                 
