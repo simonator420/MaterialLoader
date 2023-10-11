@@ -1042,13 +1042,20 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         mat.InsertShader(disp_shader)
                                         mat[c4d.MATERIAL_USE_DISPLACEMENT] = True
 
-                                    elif mapID == "DISP16" in file and load_displ:
+                                    elif mapID == "DISP16" in file and load_displ and load_16displ:
                                         disp_shader = c4d.BaseShader(c4d.Xbitmap)
                                         disp_shader[c4d.BITMAPSHADER_FILENAME] = fullpath
                                         mat[c4d.MATERIAL_DISPLACEMENT_SHADER] = disp_shader
                                         disp_shader[c4d.BITMAPSHADER_COLORPROFILE] = 1
                                         mat.InsertShader(disp_shader)
                                         mat[c4d.MATERIAL_USE_DISPLACEMENT] = True
+
+                                    elif mapID == "OPAC":
+                                        opac_shader = c4d.BaseShader(c4d.Xbitmap)
+                                        opac_shader[c4d.BITMAPSHADER_FILENAME] = fullpath
+                                        mat[c4d.MATERIAL_ALPHA_SHADER] = opac_shader
+                                        mat.InsertShader(opac_shader)
+                                        mat[c4d.MATERIAL_USE_ALPHA] = True
 
                                 doc = c4d.documents.GetActiveDocument()
                                 doc.StartUndo()
@@ -1399,7 +1406,9 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 texture_node_id: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.nodes.core.texturesampler")
                                 texture_node_port_id: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.texturesampler.tex0"
                                 texture_nodepath_port_id: maxon.String = "path"
+                                texture_nodepath_colorspace_id: maxon.String = "colorspace"
                                 texture_color_out_port_id: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.texturesampler.outcolor"
+
 
                                 bump_node_id: maxon.Id = maxon.Id("com.redshift3d.redshift4c4d.nodes.core.bumpmap")
                                 bump_in_port_id: maxon.String = "com.redshift3d.redshift4c4d.nodes.core.bumpmap.input"
@@ -1566,6 +1575,9 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             texture_node = graph.AddChild(maxon.Id(), texture_node_id)
                                             path_port = texture_node.GetInputs().FindChild(texture_node_port_id).FindChild(texture_nodepath_port_id)
                                             path_port.SetDefaultValue(maxon.Url(fullpath))
+                                            colorspace_port = texture_node.GetInputs().FindChild(texture_node_port_id).FindChild(texture_nodepath_colorspace_id)
+                                            colorspace_port.SetDefaultValue("RS_INPUT_COLORSPACE_SRGB_LINEAR")
+                                            
                                             texture_out_port: maxon.GraphNode = texture_node.GetOutputs().FindChild(texture_color_out_port_id)
                                             bumpmap_input_port_in_output_node : maxon.GraphNode = bump_node.GetInputs().FindChild(bump_in_port_id)
                                             bumpmapTypeInputPortInoutput_node: maxon.GraphNode = bump_node.GetInputs().FindChild(bump_type_in_port_id)
@@ -1583,6 +1595,9 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                             texture_node = graph.AddChild(maxon.Id(), texture_node_id)
                                             path_port = texture_node.GetInputs().FindChild(texture_node_port_id).FindChild(texture_nodepath_port_id)
                                             path_port.SetDefaultValue(maxon.Url(fullpath))
+
+                                            colorspace_port = texture_node.GetInputs().FindChild(texture_node_port_id).FindChild(texture_nodepath_colorspace_id)
+                                            colorspace_port.SetDefaultValue("RS_INPUT_COLORSPACE_SRGB_LINEAR")
                                             texture_out_port: maxon.GraphNode = texture_node.GetOutputs().FindChild(texture_color_out_port_id)
                                             bumpmap_input_port_in_output_node : maxon.GraphNode = bump_node.GetInputs().FindChild(bump_in_port_id)
                                             bumpmapTypeInputPortInoutput_node: maxon.GraphNode = bump_node.GetInputs().FindChild(bump_type_in_port_id)
