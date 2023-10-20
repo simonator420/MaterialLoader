@@ -589,6 +589,21 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.has_disp = False
         self.has_AO = False
         self.has_Ior = False
+
+        text_file_path = os.path.join(ROOT_DIR, "renderer.txt")
+
+        f = open(text_file_path, "r")
+        renderer = f.read()
+        if renderer == "Physical":
+            self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, 6400)
+        if renderer == "Corona":
+            self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, 6401)
+        if renderer == "V-ray":
+            self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, 6402)
+        if renderer == "Redshift":
+            self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, 6403)
+        if renderer == "Octane":
+            self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, 6404)
         
         self.SetBool(ID.DIALOG_MAP_AO_CB, False)
         self.Enable(ID.DIALOG_MAP_AO_CB, False)
