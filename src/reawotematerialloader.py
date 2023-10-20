@@ -6,8 +6,12 @@ from c4d import plugins, gui
 import maxon
 import redshift
 
+import reawotesettings as SettingsDialog
+
 
 REAWOTE_PLUGIN_ID=1056421
+ROOT_DIR = os.path.split(__file__)[0]
+__res__ = None
 
 dialog = None
 
@@ -72,6 +76,7 @@ class ID():
     DIALOG_GROUP_RENDERER = 100023
     DIALOG_RENDERER_TEXT = 100024
     DIALOG_RENDERER_COMBOBOX = 100025
+    DIALOG_SETTINGS_BUTTON = 100026
 
     # Todo: generate this with swig
     PLUGINID_CORONA4D_MATERIAL = 1032100
@@ -497,6 +502,21 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         self.SetTitle("REAWOTE PBR converter")
 
+        self.GroupBeginInMenuLine()
+        header = c4d.BaseContainer()
+        header.SetInt32(c4d.BITMAPBUTTON_IGNORE_BITMAP_WIDTH, False)
+        header.SetInt32(c4d.BITMAPBUTTON_IGNORE_BITMAP_HEIGHT, True)
+        header.SetBool(c4d.BITMAPBUTTON_BUTTON, True)
+        header.SetBool(c4d.BITMAPBUTTON_TOGGLE, False)
+        header.SetString(c4d.BITMAPBUTTON_TOOLTIP, "settings")
+        if c4d.GetC4DVersion() // 1000 >= 21:
+            idIconPrefs = 1026694
+        else:
+            idIconPrefs = 1026693
+        header.SetInt32(c4d.BITMAPBUTTON_ICONID1, idIconPrefs)
+        self.AddCustomGui(ID.DIALOG_SETTINGS_BUTTON, c4d.CUSTOMGUI_BITMAPBUTTON, "", c4d.BFH_RIGHT | c4d.BFV_CENTER, 32, 16, header)
+        self.GroupEnd()
+
         self.ScrollGroupBegin(ID.DIALOG_SCROLL_GROUP, default_flags, c4d.SCROLLGROUP_VERT | c4d.SCROLLGROUP_HORIZ)
         self.GroupBegin(ID.DIALOG_MAIN_GROUP, default_flags, 1)
 
@@ -536,12 +556,12 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.AddButton(ID.DIALOG_LIST_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Load selected materials")
         self.GroupBegin(ID.DIALOG_LIST_MINI_BUTTONS, c4d.BFH_LEFT, 4,1, "Mini buttons", 0, 10, 10)
         self.AddButton(ID.DIALOG_SELECT_ALL_BUTTON, c4d.BFH_LEFT, 70, 5, "Select All")
-        self.AddButton(ID.DIALOG_REFRESH_ALL_BUTTON, c4d.BFH_CENTER, 60, 5, "Refresh")
-        self.AddButton(ID.DIALOG_ADD_TO_QUEUE_BUTTON, c4d.BFH_CENTER, 110, 5, "Add To Queue")
+        self.AddButton(ID.DIALOG_REFRESH_ALL_BUTTON, c4d.BFH_LEFT, 60, 5, "Refresh")
+        self.AddButton(ID.DIALOG_ADD_TO_QUEUE_BUTTON, c4d.BFH_LEFT, 110, 5, "Add To Queue")
         self.AddButton(ID.DIALOG_CLEAN_BUTTON, c4d.BFH_CENTER, 60, 5, "Clean")
         self.GroupEnd()
 
-        self._treegui = self.AddCustomGui( 9300, c4d.CUSTOMGUI_TREEVIEW, "", c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT, 300, 300, customgui)
+        self._treegui = self.AddCustomGui(9300, c4d.CUSTOMGUI_TREEVIEW, "", c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT, 300, 300, customgui)
         if not self._treegui:
             print ("[ERROR]: Could not create TreeView")
             return False
@@ -614,6 +634,23 @@ class ReawoteMaterialDialog(gui.GeDialog):
         
     def Command(self, id, msg,):
 
+        text_file_path = os.path.join(ROOT_DIR, "renderer.txt")
+        
+        if id == ID.DIALOG_SETTINGS_BUTTON:
+            settings_dialog = SettingsDialog.get_dialog()
+            print(f"TOHLE JE SETTTTINGNGSSS DIALOOOOOG: {settings_dialog}")
+            if settings_dialog is None:
+                SettingsDialog.__res__ = __res__
+                SettingsDialog.main()
+            elif settings_dialog.IsOpen():
+                settings_dialog.Close()
+            else:
+                settings_dialog.Open(dlgtype=c4d.DLG_TYPE_ASYNC,
+                                  pluginid=REAWOTE_PLUGIN_ID,
+                                  defaultw=360,
+                                  defaulth=380,
+                                  subid=1)
+
         if id == ID.DIALOG_FOLDER_BUTTON:
             path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
             if path == None:
@@ -623,7 +660,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 path = path.decode("utf-8")
             except: 
                 pass
-            self.Reset()
+            self.Reset() 
 
             self._listView.listOfTexture.clear()
             path_list.clear()
@@ -726,6 +763,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
             active_checkbox_list = []
 
         if id == ID.DIALOG_SELECT_ALL_BUTTON:
+
+            f = open(text_file_path, "w")
+            f.write("Ted by to melo byt jine")
+            f.close()
+            
             select_all = True
             for item in checkbox_list:
                 if item.IsSelected == False:
