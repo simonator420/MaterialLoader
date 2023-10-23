@@ -452,6 +452,20 @@ class ListView(c4d.gui.TreeViewFunctions):
  
     def IsChecked(self, root, userdata, obj, column):
         if obj.IsSelected:
+            print(f"Kliknul jsem na: {obj}")
+            path = path_list[self.listOfTexture.index(obj)]
+            path_parts = path.split("/")[:-1]
+            preview_path = "/".join(path_parts) + "/PREVIEW"
+            if os.path.exists(preview_path):
+                contents = os.listdir(preview_path)
+                for file in contents:
+                    if "FABRIC_1" in file:
+                        print(os.path.join(preview_path, file))
+                    elif "SPHERE_1" in file:
+                        print(os.path.join(preview_path, file))
+            else:
+                print(f"The directory {preview_path} does not exist.")
+
             return c4d.LV_CHECKBOX_CHECKED | c4d.LV_CHECKBOX_ENABLED
         else:
             return c4d.LV_CHECKBOX_ENABLED
@@ -478,8 +492,6 @@ class ListView(c4d.gui.TreeViewFunctions):
         for tex in reversed(self.listOfTexture):
             if tex.IsSelected:
                 self.listOfTexture.remove(tex)
-
-
 
 class ReawoteMaterialDialog(gui.GeDialog):
     has_16b_disp = False
@@ -519,6 +531,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         self.ScrollGroupBegin(ID.DIALOG_SCROLL_GROUP, default_flags, c4d.SCROLLGROUP_VERT | c4d.SCROLLGROUP_HORIZ)
         self.GroupBegin(ID.DIALOG_MAIN_GROUP, default_flags, 1)
+        self.GroupBorderSpace(15, 0, 0, 0)
 
         self.GroupBegin(ID.DIALOG_FOLDER_GROUP, c4d.BFH_SCALEFIT, 2, 1, "Material folder", 0, 10, 10)
         self.AddStaticText(ID.DIALOG_FOLDER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Material folder", 0)
