@@ -653,7 +653,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
         
         if id == ID.DIALOG_SETTINGS_BUTTON:
             settings_dialog = SettingsDialog.get_dialog()
-            print(f"TOHLE JE SETTTTINGNGSSS DIALOOOOOG: {settings_dialog}")
             if settings_dialog is None:
                 SettingsDialog.__res__ = __res__
                 SettingsDialog.main()
@@ -773,7 +772,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
             self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, True)
             self.Enable(ID.DIALOG_CLEAN_BUTTON, True)
             self.Enable(ID.DIALOG_RENDERER_COMBOBOX, True)
-            self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, 6400)
+            # self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, 6400)
 
             active_checkbox_list = []
 
