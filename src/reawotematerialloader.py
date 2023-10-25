@@ -1978,7 +1978,7 @@ class ReawoteMaterialLoader(plugins.CommandData):
             dialog = ReawoteMaterialDialog()
 
     def Execute(self, doc):
-        dialog.Open(dlgtype=c4d.DLG_TYPE_ASYNC, pluginid=REAWOTE_PLUGIN_ID, defaultw=450, defaulth=650)
+        dialog.Open(dlgtype=c4d.DLG_TYPE_ASYNC, pluginid=REAWOTE_PLUGIN_ID, defaultw=450, defaulth=750, subid=1)
         return True
         
     def CoreMessage(self, id, msg):
