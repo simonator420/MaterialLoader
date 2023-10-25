@@ -361,6 +361,8 @@ class ID():
     OCTANE_MULTIPLY = 1029516
     OCTANE_DISPLACEMENT = 1031901
 
+    MATERIAL_PREVIEW = 800
+
 class TextureObject(object):
     texturePath = "TexPath"
     otherData = "OtherData"
@@ -385,11 +387,45 @@ class TextureObject(object):
  
     def __str__(self):
         return self.texturePath
+    
+class MaterialPreview(c4d.gui.GeUserArea):
+    def __init__(self, bmp):
+        super(MaterialPreview, self).__init__()
+        self._bmp = bmp
+
+    def DrawMsg(self, x1, y1, x2, y2, msg):
+        if self._bmp:
+            # Get the width and height of the user area
+            ua_width = x2 - x1
+            ua_height = y2 - y1
+
+            # Get the bitmap width and height
+            bmp_width = self._bmp.GetBw()
+            bmp_height = self._bmp.GetBh()
+
+            # Calculate the scaling factor
+            scale_factor = min(ua_width / bmp_width, ua_height / bmp_height)
+
+            # Calculate the scaled bitmap dimensions
+            scaled_bmp_width = int(bmp_width * scale_factor)
+            scaled_bmp_height = int(bmp_height * scale_factor)
+
+            # Draw the bitmap scaled to fit within the user area
+            self.DrawBitmap(self._bmp, 0, 0, scaled_bmp_width, scaled_bmp_height, 0, 0, bmp_width, bmp_height, c4d.BMP_NORMAL)
+
+            
+    def setBitmap(self, bmp):
+        self._bmp = bmp
+
+    def GetMinSize(self):
+      return 42, 42
 
 class ListView(c4d.gui.TreeViewFunctions):
+
  
-    def __init__(self):
+    def __init__(self, dialog_ref=None):
         self.listOfTexture = list()
+        self.dialog_ref = dialog_ref
  
     def IsResizeColAllowed(self, root, userdata, lColID):
         return True
@@ -440,6 +476,7 @@ class ListView(c4d.gui.TreeViewFunctions):
             obj.Select()
         elif mode == c4d.SELECTION_SUB:
             obj.Deselect()
+        self.UpdateMaterialPreview(obj)
  
     def IsSelected(self, root, userdata, obj):
         return obj.IsSelected
@@ -452,23 +489,30 @@ class ListView(c4d.gui.TreeViewFunctions):
  
     def IsChecked(self, root, userdata, obj, column):
         if obj.IsSelected:
-            print(f"Kliknul jsem na: {obj}")
-            path = path_list[self.listOfTexture.index(obj)]
-            path_parts = path.split("/")[:-1]
-            preview_path = "/".join(path_parts) + "/PREVIEW"
-            if os.path.exists(preview_path):
-                contents = os.listdir(preview_path)
-                for file in contents:
-                    if "FABRIC_1" in file:
-                        print(os.path.join(preview_path, file))
-                    elif "SPHERE_1" in file:
-                        print(os.path.join(preview_path, file))
-            else:
-                print(f"The directory {preview_path} does not exist.")
-
+            self.UpdateMaterialPreview(obj)
             return c4d.LV_CHECKBOX_CHECKED | c4d.LV_CHECKBOX_ENABLED
         else:
             return c4d.LV_CHECKBOX_ENABLED
+
+    def UpdateMaterialPreview(self, obj):
+        print(f"Updating preview for: {obj}")
+        path = path_list[self.listOfTexture.index(obj)]
+        path_parts = path.split("/")[:-1]
+        preview_path = "/".join(path_parts) + "/PREVIEW"
+        
+        if os.path.exists(preview_path):
+            contents = os.listdir(preview_path)
+            for file in contents:
+                if "FABRIC_1" in file or "SPHERE_1" in file:
+                    print(os.path.join(preview_path, file))
+                    if self.dialog_ref:
+                        self.dialog_ref.set_preview_material(path=(os.path.join(preview_path, file)))
+                    else:
+                        print("Failed to load bitmap from:", path)
+                    break  # Exit the loop once we've found and processed the file
+        else:
+            print(f"The directory {preview_path} does not exist.")
+
  
     def GetName(self, root, userdata, obj):
         return str(obj)
@@ -502,11 +546,16 @@ class ReawoteMaterialDialog(gui.GeDialog):
     material_folder = None
 
     _treegui = None
-    _listView = ListView()
+    _listView = None
 
     def __init__(self):
+        self._listView = ListView(self)
+        self._area = MaterialPreview(None)
+        self.MaterialPreviewBmp = c4d.bitmaps.BaseBitmap()
+        self.MaterialPreviewBmpTmp = c4d.bitmaps.BaseBitmap()
+        self.MaterialPreviewBmp.Init(42, 42)
         super(ReawoteMaterialDialog, self).__init__()
-        pass
+        #pass
 
     def CreateLayout(self):
 
@@ -533,7 +582,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.GroupBegin(ID.DIALOG_MAIN_GROUP, default_flags, 1)
         self.GroupBorderSpace(15, 0, 0, 0)
 
-        self.GroupBegin(ID.DIALOG_FOLDER_GROUP, c4d.BFH_SCALEFIT, 2, 1, "Material folder", 0, 10, 10)
+        self.GroupBegin(ID.DIALOG_FOLDER_GROUP, c4d.BFH_SCALEFIT, 3, 1, "Material folder", 0, 10, 10)
         self.AddStaticText(ID.DIALOG_FOLDER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Material folder", 0)
         self.AddButton(ID.DIALOG_FOLDER_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Browse")
         self.GroupEnd()
@@ -574,10 +623,15 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.AddButton(ID.DIALOG_CLEAN_BUTTON, c4d.BFH_CENTER, 60, 5, "Clean")
         self.GroupEnd()
 
-        self._treegui = self.AddCustomGui(9300, c4d.CUSTOMGUI_TREEVIEW, "", c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT, 300, 300, customgui)
+        self._treegui = self.AddCustomGui(9300, c4d.CUSTOMGUI_TREEVIEW, "", c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT, 100, 30, customgui)
         if not self._treegui:
             print ("[ERROR]: Could not create TreeView")
             return False
+        
+        self.GroupBegin(0, c4d.BFH_SCALEFIT, 1, 1, "Material preview", 0)
+        self.AddUserArea(ID.MATERIAL_PREVIEW, c4d.BFH_CENTER, 42, 42)
+        self.AttachUserArea(self._area, ID.MATERIAL_PREVIEW)
+        self.GroupEnd()
     
         self.GroupBegin(ID.DIALOG_SCROLL_GROUP, c4d.BFH_SCALEFIT, 2, 1, "Material folder", 0, 10, 10)
         self.GroupEnd()
@@ -641,7 +695,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         layout = c4d.BaseContainer()
         layout.SetLong(ID_CHECKBOX, c4d.LV_CHECKBOX)
         layout.SetLong(ID_NAME, c4d.LV_TREE)
-        self._treegui.SetLayout(3, layout)
+        self._treegui.SetLayout(2, layout)
  
         self._treegui.SetHeaderText(ID_CHECKBOX, "Check")
         self._treegui.SetHeaderText(ID_NAME, "Name")
@@ -659,6 +713,19 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
     def GetFileAssetUrl(path: str) -> maxon.Url:
         return maxon.Url(path)
+    
+    def set_preview_material(self, path):
+        self.MaterialPreviewBmpTmp.InitWith(path)
+        if (self.MaterialPreviewBmpTmp.GetBw()-1 > 41 and self.MaterialPreviewBmpTmp.GetBh()-1 > 41):
+            self.MaterialPreviewBmpTmp.ScaleBicubic(self.MaterialPreviewBmp,
+            0, 0, self.MaterialPreviewBmpTmp.GetBw()-1, self.MaterialPreviewBmpTmp.GetBh()-1,
+            0, 0, 41, 41)
+        else:
+            self.MaterialPreviewBmpTmp.ScaleIt(self.MaterialPreviewBmp, 256, True, False)
+        self._area.setBitmap(self.MaterialPreviewBmpTmp)
+        self._area.Redraw()
+        self.LayoutChanged(ID.MATERIAL_PREVIEW)
+
         
     def Command(self, id, msg,):
 
@@ -1911,7 +1978,7 @@ class ReawoteMaterialLoader(plugins.CommandData):
             dialog = ReawoteMaterialDialog()
 
     def Execute(self, doc):
-        dialog.Open(c4d.DLG_TYPE_ASYNC, REAWOTE_PLUGIN_ID, -1, -1, 450, 950)
+        dialog.Open(dlgtype=c4d.DLG_TYPE_ASYNC, pluginid=REAWOTE_PLUGIN_ID, defaultw=450, defaulth=650)
         return True
         
     def CoreMessage(self, id, msg):
