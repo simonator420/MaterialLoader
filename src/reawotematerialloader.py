@@ -503,7 +503,7 @@ class ListView(c4d.gui.TreeViewFunctions):
         path = path_list[self.listOfTexture.index(obj)]
         path_parts = path.split("/")[:-1]
         preview_path = "/".join(path_parts) + "/PREVIEW"
-        self.dialog_ref.SetString(ID.DIALOG_PREVIEW_TEXT, path_parts[6])
+        self.dialog_ref.SetString(ID.DIALOG_PREVIEW_TEXT, obj)
         
         if os.path.exists(preview_path):
             contents = os.listdir(preview_path)
@@ -568,7 +568,17 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         self.SetTitle("REAWOTE PBR converter")
 
-        self.GroupBeginInMenuLine()
+        self.ScrollGroupBegin(ID.DIALOG_SCROLL_GROUP, default_flags, c4d.SCROLLGROUP_VERT | c4d.SCROLLGROUP_HORIZ)
+        self.GroupBegin(ID.DIALOG_MAIN_GROUP, default_flags, 1)
+        self.GroupBorderSpace(15, 0, 0, 0)
+
+        self.GroupBegin(ID.DIALOG_FOLDER_GROUP, c4d.BFH_SCALEFIT, 3, 1, "Material folder", 0, 10, 10)
+        self.AddStaticText(ID.DIALOG_FOLDER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Material folder", 0)
+        self.AddButton(ID.DIALOG_FOLDER_BUTTON, c4d.BFH_RIGHT, inith=10, initw=250, name="Browse")
+        self.GroupEnd()
+
+        self.GroupBegin(ID.DIALOG_GROUP_RENDERER,  c4d.BFH_SCALEFIT, 3, 1, "Renderer", 0, 10, 10)
+        self.AddStaticText(ID.DIALOG_RENDERER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Select Renderer", 0)
         header = c4d.BaseContainer()
         header.SetInt32(c4d.BITMAPBUTTON_IGNORE_BITMAP_WIDTH, False)
         header.SetInt32(c4d.BITMAPBUTTON_IGNORE_BITMAP_HEIGHT, True)
@@ -580,21 +590,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
         else:
             idIconPrefs = 1026693
         header.SetInt32(c4d.BITMAPBUTTON_ICONID1, idIconPrefs)
-        self.AddCustomGui(ID.DIALOG_SETTINGS_BUTTON, c4d.CUSTOMGUI_BITMAPBUTTON, "", c4d.BFH_RIGHT | c4d.BFV_CENTER, 32, 16, header)
-        self.GroupEnd()
-
-        self.ScrollGroupBegin(ID.DIALOG_SCROLL_GROUP, default_flags, c4d.SCROLLGROUP_VERT | c4d.SCROLLGROUP_HORIZ)
-        self.GroupBegin(ID.DIALOG_MAIN_GROUP, default_flags, 1)
-        self.GroupBorderSpace(15, 0, 0, 0)
-
-        self.GroupBegin(ID.DIALOG_FOLDER_GROUP, c4d.BFH_SCALEFIT, 3, 1, "Material folder", 0, 10, 10)
-        self.AddStaticText(ID.DIALOG_FOLDER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Material folder", 0)
-        self.AddButton(ID.DIALOG_FOLDER_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Browse")
-        self.GroupEnd()
-
-        self.GroupBegin(ID.DIALOG_GROUP_RENDERER,  c4d.BFH_SCALEFIT, 2, 1, "Renderer", 0, 10, 10)
-        self.AddStaticText(ID.DIALOG_RENDERER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Select Renderer", 0)
-        renderers = self.AddComboBox(ID.DIALOG_RENDERER_COMBOBOX, c4d.BFH_SCALEFIT, inith=10, initw=50)
+        self.AddCustomGui(ID.DIALOG_SETTINGS_BUTTON, c4d.CUSTOMGUI_BITMAPBUTTON, "", c4d.BFH_LEFT, 32, 16, header)
+        renderers = self.AddComboBox(ID.DIALOG_RENDERER_COMBOBOX, c4d.BFH_RIGHT, inith=10, initw=250)
         physical = self.AddChild(renderers, 6400, "Physical")
         corona = self.AddChild(renderers, 6401, "Corona")
         vray = self.AddChild(renderers, 6402, "V-ray")
