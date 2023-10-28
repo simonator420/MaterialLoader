@@ -36,7 +36,9 @@ class SettingsDialog(c4d.gui.GeDialog):
         pass
 
     def InitValues(self):
-        text_file_path = os.path.join(ROOT_DIR, "renderer.txt")
+        if(os.name == "posix"):
+            text_file_path = os.path.join(ROOT_DIR, "renderer.txt")
+        
         f = open(text_file_path, "r")
         renderer = f.read()
         if renderer == "Physical":
@@ -72,7 +74,8 @@ class SettingsDialog(c4d.gui.GeDialog):
     def Command(self, id, msg):
 
         if id == ID.DIALOG_OK_BUTTON:
-            text_file_path = os.path.join(ROOT_DIR, "renderer.txt")
+            if(os.name == "posix"):
+                text_file_path = os.path.join(ROOT_DIR, "renderer.txt")
             f = open(text_file_path, "w")
             renderer_combobox = self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX)
             if renderer_combobox == ID.PHYSICAL_RENDERER: 
@@ -85,6 +88,8 @@ class SettingsDialog(c4d.gui.GeDialog):
                 f.write("Redshift")
             if renderer_combobox == ID.OCTANE_RENDERER:
                 f.write("Octane")
+            else:
+                pass
             self.Close()
 
         return True
