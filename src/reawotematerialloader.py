@@ -656,7 +656,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.has_AO = False
         self.has_Ior = False
 
-        text_file_path = os.path.join(ROOT_DIR, "renderer.txt")
+        if(os.name == "posix"):
+            text_file_path = os.path.join(ROOT_DIR, "renderer_posix.txt")
 
         f = open(text_file_path, "r")
         renderer = f.read()
@@ -728,8 +729,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         
     def Command(self, id, msg,):
-
-        text_file_path = os.path.join(ROOT_DIR, "renderer.txt")
         
         if id == ID.DIALOG_SETTINGS_BUTTON:
             settings_dialog = SettingsDialog.get_dialog()

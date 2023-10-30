@@ -36,9 +36,12 @@ class SettingsDialog(c4d.gui.GeDialog):
         pass
 
     def InitValues(self):
+
         if(os.name == "posix"):
-            text_file_path = os.path.join(ROOT_DIR, "renderer.txt")
-        
+            text_file_path = os.path.join(ROOT_DIR, "renderer_posix.txt")
+        if(os.name == "nt"):
+            text_file_path = os.path.join(ROOT_DIR, "renderer_nt.txt")
+
         f = open(text_file_path, "r")
         renderer = f.read()
         if renderer == "Physical":
@@ -51,7 +54,6 @@ class SettingsDialog(c4d.gui.GeDialog):
             self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, ID.REDSHIFT_RENDERER)
         if renderer == "Octane":
             self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, ID.OCTANE_RENDERER)
-        print(f"Tohle je renderer{renderer}")
         return True
     def CreateLayout(self):
         self.SetTitle("PBR Loader Settings")
@@ -75,7 +77,7 @@ class SettingsDialog(c4d.gui.GeDialog):
 
         if id == ID.DIALOG_OK_BUTTON:
             if(os.name == "posix"):
-                text_file_path = os.path.join(ROOT_DIR, "renderer.txt")
+                text_file_path = os.path.join(ROOT_DIR, "renderer_posix.txt")
             f = open(text_file_path, "w")
             renderer_combobox = self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX)
             if renderer_combobox == ID.PHYSICAL_RENDERER: 
