@@ -855,6 +855,21 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
             active_checkbox_list = []
 
+            if (c4d.plugins.FindPlugin(1036219)):
+                print("Je tady redshiiift")
+            else:
+                print("Neni tady redshiift")
+
+            if (c4d.plugins.FindPlugin(1036219)):
+                print("Je tady redshiiift")
+            else:
+                print("Neni tady redshiift")
+
+            if (c4d.plugins.FindPlugin(1029988)):
+                print("Je tady arnold")
+            else:
+                print("Neni tady arnold")
+
         if id == ID.DIALOG_SELECT_ALL_BUTTON:
 
             self.HideElement(ID.DIALOG_PREVIEW_GROUP, True)
@@ -1205,6 +1220,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             ##########
                     
                             if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6401:
+
+                                if not c4d.plugins.FindPlugin(1030480):
+                                    c4d.gui.MessageDialog("Corona is not installed")
+                                    return
+
                                 mat = c4d.BaseMaterial(ID.CORONA_STR_MATERIAL_PHYSICAL)
                                 mat.SetParameter(ID.CORONA_PHYSICAL_MATERIAL_ROUGHNESS_MODE, ID.CORONA_PHYSICAL_MATERIAL_ROUGHNESS_MODE_GLOSSINESS, c4d.DESCFLAGS_SET_NONE)
                                 mat.SetParameter(ID.CORONA_MATERIAL_PREVIEWSIZE, ID.CORONA_MATERIAL_PREVIEWSIZE_1024, c4d.DESCFLAGS_SET_NONE)
@@ -1388,6 +1408,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             #########
 
                             if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6402:
+
+                                if not c4d.plugins.FindPlugin(1053272):
+                                    c4d.gui.MessageDialog("V-ray is not installed")
+                                    return
+
                                 mat = c4d.BaseMaterial(ID.VRAY_MATERIAL)
                                 fusion_shader = None
                                 dir = os.listdir(folder_path)
@@ -1513,6 +1538,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             ############
                             
                             if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6403:
+
+                                if not c4d.plugins.FindPlugin(1036219):
+                                    c4d.gui.MessageDialog("Redshift is not installed")
+                                    return
+
                                 color_layer_node = None
                                 color_layer_added = False
                                 dir = os.listdir(folder_path)
@@ -1794,6 +1824,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             ##########
                             
                             if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6404:
+
+                                if not c4d.plugins.FindPlugin(1029525):
+                                    c4d.gui.MessageDialog("Octane is not installed")
+                                    return
+
                                 doc = c4d.documents.GetActiveDocument()
                                 dir = os.listdir(folder_path)
                                 mat = c4d.BaseMaterial(ID.OCTANE_MATERIAL)
