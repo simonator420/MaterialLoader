@@ -392,35 +392,22 @@ class TextureObject(object):
     
 class MaterialPreview(c4d.gui.GeUserArea):
     def __init__(self, bmp):
-        super(MaterialPreview, self).__init__()
-        self._bmp = bmp
+      super(MaterialPreview, self).__init__()
+      self._bmp = bmp
 
     def DrawMsg(self, x1, y1, x2, y2, msg):
-        if self._bmp:
-            # Get the width and height of the user area
-            ua_width = x2 - x1
-            ua_height = y2 - y1
+      #self.DrawSetPen(c4d.Vector(0))
+      #self.DrawRectangle(0, 0, 42, 42)
+      if not self._bmp: return
 
-            # Get the bitmap width and height
-            bmp_width = self._bmp.GetBw()
-            bmp_height = self._bmp.GetBh()
-
-            # Calculate the scaling factor
-            scale_factor = min(ua_width / bmp_width, ua_height / bmp_height)
-
-            # Calculate the scaled bitmap dimensions
-            scaled_bmp_width = int(bmp_width * scale_factor)
-            scaled_bmp_height = int(bmp_height * scale_factor)
-
-            # Draw the bitmap scaled to fit within the user area
-            self.DrawBitmap(self._bmp, 0, 0, scaled_bmp_width, scaled_bmp_height, 0, 0, bmp_width, bmp_height, c4d.BMP_NORMAL)
-
-            
-    def setBitmap(self, bmp):
-        self._bmp = bmp
+      coords = self.Local2Global()
+      self.DrawBitmap(self._bmp, 0, 0, 62, 62, 0, 0, 62, 62, c4d.BMP_NORMAL | c4d.BMP_ALLOWALPHA)
 
     def GetMinSize(self):
-      return 60, 60
+      return 62, 62
+
+    def setBitmap(self, bmp):
+      self._bmp = bmp
 
 class ListView(c4d.gui.TreeViewFunctions):
 
@@ -501,10 +488,16 @@ class ListView(c4d.gui.TreeViewFunctions):
         print(f"Updating preview for: {obj}")
         self.dialog_ref.HideElement(ID.DIALOG_PREVIEW_GROUP, False)
         path = path_list[self.listOfTexture.index(obj)]
-        path_parts = path.split("/")[:-1]
-        preview_path = "/".join(path_parts) + "/PREVIEW"
-        self.dialog_ref.SetString(ID.DIALOG_PREVIEW_TEXT, obj)
         
+        if os.name == "posix":
+            path_parts = path.split(os.path.sep)[:-1]
+            preview_path = os.path.sep.join(path_parts) + os.path.sep + "PREVIEW"
+
+        if os.name == "nt":
+            path_parts = path.split(os.path.sep)[:-1]
+            preview_path = os.path.sep.join(path_parts) + os.path.sep + "PREVIEW"
+
+        self.dialog_ref.SetString(ID.DIALOG_PREVIEW_TEXT, obj)
         if os.path.exists(preview_path):
             contents = os.listdir(preview_path)
             for file in contents:
@@ -558,7 +551,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self._area = MaterialPreview(None)
         self.MaterialPreviewBmp = c4d.bitmaps.BaseBitmap()
         self.MaterialPreviewBmpTmp = c4d.bitmaps.BaseBitmap()
-        self.MaterialPreviewBmp.Init(42, 42)
+        self.MaterialPreviewBmp.Init(62, 62)
         super(ReawoteMaterialDialog, self).__init__()
         #pass
 
@@ -658,6 +651,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         if(os.name == "posix"):
             text_file_path = os.path.join(ROOT_DIR, "renderer_posix.txt")
+        if(os.name == "nt"):
+            text_file_path = os.path.join(ROOT_DIR, "renderer_nt.txt")
 
         f = open(text_file_path, "r")
         renderer = f.read()
@@ -717,15 +712,18 @@ class ReawoteMaterialDialog(gui.GeDialog):
     
     def set_preview_material(self, path):
         self.MaterialPreviewBmpTmp.InitWith(path)
-        if (self.MaterialPreviewBmpTmp.GetBw()-1 > 41 and self.MaterialPreviewBmpTmp.GetBh()-1 > 41):
+        if (self.MaterialPreviewBmpTmp.GetBw()-1 > 41 and self.MaterialPreviewBmpTmp.GetBh()-1 > 61):
             self.MaterialPreviewBmpTmp.ScaleBicubic(self.MaterialPreviewBmp,
-            0, 0, self.MaterialPreviewBmpTmp.GetBw()-1, self.MaterialPreviewBmpTmp.GetBh()-1,
-            0, 0, 41, 41)
+             0, 0, self.MaterialPreviewBmpTmp.GetBw()-1, self.MaterialPreviewBmpTmp.GetBh()-1,
+             0, 0, 61, 61)
         else:
             self.MaterialPreviewBmpTmp.ScaleIt(self.MaterialPreviewBmp, 256, True, False)
-        self._area.setBitmap(self.MaterialPreviewBmpTmp)
+        self._area.setBitmap(self.MaterialPreviewBmp)
         self._area.Redraw()
         self.LayoutChanged(ID.DIALOG_MATERIAL_PREVIEW)
+        self.LayoutChanged(30)
+
+        return
 
         
     def Command(self, id, msg,):

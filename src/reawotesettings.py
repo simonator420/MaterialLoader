@@ -78,6 +78,8 @@ class SettingsDialog(c4d.gui.GeDialog):
         if id == ID.DIALOG_OK_BUTTON:
             if(os.name == "posix"):
                 text_file_path = os.path.join(ROOT_DIR, "renderer_posix.txt")
+            if(os.name == "nt"):
+                text_file_path = os.path.join(ROOT_DIR, "renderer_nt.txt")
             f = open(text_file_path, "w")
             renderer_combobox = self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX)
             if renderer_combobox == ID.PHYSICAL_RENDERER: 
