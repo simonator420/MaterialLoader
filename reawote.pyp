@@ -1,3 +1,22 @@
+# -*- coding: utf-8 -*-
+# #### BEGIN GPL LICENSE BLOCK #####
+#
+#  This program is free software; you can redistribute it and/or
+#  modify it under the terms of the GNU General Public License
+#  as published by the Free Software Foundation; either version 2
+#  of the License, or (at your option) any later version.
+#
+#  This program is distributed in the hope that it will be useful,
+#  but WITHOUT ANY WARRANTY; without even the implied warranty of
+#  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+#  GNU General Public License for more details.
+#
+#  You should have received a copy of the GNU General Public License
+#  along with this program; if not, write to the Free Software Foundation,
+#  Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA.
+#
+# ##### END GPL LICENSE BLOCK #####
+
 import os.path
 import sys
 import socket
@@ -21,32 +40,7 @@ class CommandThread(c4d.threading.C4DThread):
         src = os.path.join(ROOT_DIR, "src")
         if src not in sys.path: 
             sys.path.append(src)
-        import reawotefileloader as ReawoteFileLoader
-
-        # sock = socket.socket()
-        # sock.connect(("localhost", REAWOTE_APP_PORT))
-        # sock.send("{\"type\": \"registerPlugin\", \"data\": {\"plugin\": \"cinema4d\", \"fullName\": \"Cinema4D - Corona renderer\"}}".encode())
-        # while True:
-        #     if self.TestBreak():
-        #         print("Canceled thread-execution.")
-        #         return
-        #     msg = sock.recv(512)
-        #     if len(msg) > 0:
-        #         print(str(msg))
-        #         c4d.StatusSetText("Reawote plugin is running" + msg.decode())
-        #         data=json.loads(msg)
-        #         if data["type"] == "loadMaterial":
-        #             newpath=data["data"]["path"]
-        #             print("Path is: " + newpath)
-        #             if (len(newpath)) > 0:
-        #                 texturepath = newpath
-        #                 print("TEXTUREPATH WAS SET: " + texturepath)
-        #             c4d.SpecialEventAdd(REAWOTE_PLUGIN_ID)
-        #     # Tohle nefunguje, jako dalsi krok je tady potreba vyvolat udalost, ktera se preda do hlavniho vlakna
-        #     # https://developers.maxon.net/docs/Cinema4DCPPSDK/html/page_manual_cinemathreads.html
-        #     # https://plugincafe.maxon.net/topic/10739/14183_creating-custom-callback/3
-        #     # https://developers.maxon.net/docs/Cinema4DPythonSDK/html/modules/c4d.documents/BaseDocument/index.html#BaseDocument.InsertMaterial
-        #     # https://developers.maxon.net/docs/Cinema4DPythonSDK/html/modules/c4d.threading/index.html
+        import reawotematerialloader as ReawoteFileLoader
 
         #     time.sleep(30)
         c4d.StatusClear()
@@ -61,7 +55,7 @@ class TimerMessage(c4d.plugins.MessageData):
         if id == REAWOTE_PLUGIN_ID:
             print("YES")
             print("Path is: " + texturepath)
-            import reawotefileloader as ReawoteFileLoader
+            import reawotematerialloader as ReawoteFileLoader
             loader=ReawoteFileLoader.ReawoteFileLoader()
             loader.materialFolder=texturepath
             loader.HandleLoadMaterial()
