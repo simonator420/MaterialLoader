@@ -2011,6 +2011,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.Enable(ID.DIALOG_MAP_16B_NORMAL_CB, False)
         self.SetBool(ID.DIALOG_MAP_IOR_CB, False)
         self.Enable(ID.DIALOG_MAP_IOR_CB, False)
+        self.Enable(ID.DIALOG_RENDERER_COMBOBOX, False)
 
         self.Enable(ID.DIALOG_LOAD_BUTTON, False)
         # self.Enable(ID.DIALOG_LIST_BUTTON, False)
