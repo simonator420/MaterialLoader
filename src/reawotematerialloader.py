@@ -100,6 +100,7 @@ class ID():
     DIALOG_PREVIEW_GROUP = 100027
     DIALOG_MATERIAL_PREVIEW = 100028
     DIALOG_PREVIEW_TEXT = 100029
+    DIALOG_HIDDEN_PREVIEW = 100030
 
     PLUGINID_CORONA4D_MATERIAL = 1032100
     PLUGINID_CORONA4D_NORMALSHADER = 1035405
@@ -490,6 +491,7 @@ class ListView(c4d.gui.TreeViewFunctions):
     def SetCheck(self, root, userdata, obj, column, checked, msg):
         if checked:
             self.UpdateMaterialPreview(obj)
+            print("Checked")
             obj.Select()
         else:
             self.UpdateMaterialPreview(obj)
@@ -502,8 +504,10 @@ class ListView(c4d.gui.TreeViewFunctions):
             return c4d.LV_CHECKBOX_ENABLED
 
     def UpdateMaterialPreview(self, obj):
-        print(f"Updating preview for: {obj}")
         self.dialog_ref.HideElement(ID.DIALOG_PREVIEW_GROUP, False)
+        self.dialog_ref.LayoutChanged(ID.DIALOG_HIDDEN_PREVIEW)
+        
+        print(f"Updating preview for: {obj}")
         path = path_list[self.listOfTexture.index(obj)]
         
         if os.name == "posix":
@@ -514,7 +518,7 @@ class ListView(c4d.gui.TreeViewFunctions):
             path_parts = path.split(os.path.sep)[:-1]
             preview_path = os.path.sep.join(path_parts) + os.path.sep + "PREVIEW"
 
-        self.dialog_ref.SetString(ID.DIALOG_PREVIEW_TEXT, obj)
+        self.dialog_ref.SetString(ID.DIALOG_PREVIEW_TEXT, f"  {obj}")
         if os.path.exists(preview_path):
             contents = os.listdir(preview_path)
             for file in contents:
@@ -635,19 +639,28 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.AddButton(ID.DIALOG_CLEAN_BUTTON, c4d.BFH_CENTER, 60, 5, "Clean")
         self.GroupEnd()
 
-        self._treegui = self.AddCustomGui(9300, c4d.CUSTOMGUI_TREEVIEW, "", c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT, 100, 30, customgui)
+        self._treegui = self.AddCustomGui(9300, c4d.CUSTOMGUI_TREEVIEW, "TreeView", c4d.BFV_SCALEFIT, 620, 280, customgui)
         if not self._treegui:
             print ("[ERROR]: Could not create TreeView")
             return False
-        
-        self.GroupBegin(ID.DIALOG_PREVIEW_GROUP, c4d.BFH_SCALEFIT, 2, 1, "Material preview", 0)
-        self.GroupBorderSpace(0, 5, 0, 0)
-        self.AddUserArea(ID.DIALOG_MATERIAL_PREVIEW, c4d.BFH_CENTER, 60, 60)
-        self.AttachUserArea(self._area, ID.DIALOG_MATERIAL_PREVIEW)
-        self.AddStaticText(ID.DIALOG_PREVIEW_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Material preview", 0)
-        self.GroupEnd()
+
+        if self.GroupBegin(ID.DIALOG_HIDDEN_PREVIEW, c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT):
+            self.GroupBorderSpace(10, 10, 10, 10)  # Optional spacing
+
+            # Existing DIALOG_PREVIEW_GROUP wrapped inside the parent group
+            if self.GroupBegin(ID.DIALOG_PREVIEW_GROUP, c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT, title="Material Preview"):
+                self.GroupBorderSpace(5, 5, 5, 5)  # Optional spacing for inner group
+
+                # The rest of your DIALOG_PREVIEW_GROUP content goes here
+                self.AddUserArea(ID.DIALOG_MATERIAL_PREVIEW, c4d.BFH_CENTER, 60, 60)
+                self.AttachUserArea(self._area, ID.DIALOG_MATERIAL_PREVIEW)
+                self.AddStaticText(ID.DIALOG_PREVIEW_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Material preview", 0)
+
+                self.GroupEnd()  # End of DIALOG_PREVIEW_GROUP
+
+            self.GroupEnd()
     
-        self.GroupBegin(ID.DIALOG_SCROLL_GROUP, c4d.BFH_SCALEFIT, 2, 1, "Material folder", 0, 10, 10)
+        # self.GroupBegin(ID.DIALOG_SCROLL_GROUP, c4d.BFH_SCALEFIT, 2, 1, "Material folder", 0, 10, 10)
         self.GroupEnd()
         self.GroupEnd()
         self.GroupEnd()
@@ -720,7 +733,9 @@ class ReawoteMaterialDialog(gui.GeDialog):
             self._listView.listOfTexture.remove(tex)
         self._treegui.Refresh()
 
+        # self._listView.UpdateMaterialPreview(os.path.join(ROOT_DIR, "res", "images", "default_preview.png"))
         self.HideElement(ID.DIALOG_PREVIEW_GROUP, True)
+        self.LayoutChanged(ID.DIALOG_HIDDEN_PREVIEW)
 
         return True
 
@@ -737,7 +752,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
             self.MaterialPreviewBmpTmp.ScaleIt(self.MaterialPreviewBmp, 256, True, False)
         self._area.setBitmap(self.MaterialPreviewBmp)
         self._area.Redraw()
-        self.LayoutChanged(ID.DIALOG_MATERIAL_PREVIEW)
+        self.LayoutChanged(ID.DIALOG_PREVIEW_GROUP)
         self.LayoutChanged(30)
 
         return
@@ -888,6 +903,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         if id == ID.DIALOG_SELECT_ALL_BUTTON:
 
             self.HideElement(ID.DIALOG_PREVIEW_GROUP, True)
+            self.LayoutChanged(ID.DIALOG_HIDDEN_PREVIEW)
             
             select_all = True
             for item in checkbox_list:
@@ -1077,8 +1093,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 active_checkbox_list = []
                 self._treegui.Refresh()
                 self.HideElement(ID.DIALOG_PREVIEW_GROUP, True)
+                self.LayoutChanged(ID.DIALOG_HIDDEN_PREVIEW)
         
         if id == ID.DIALOG_CLEAN_BUTTON:
+            self.HideElement(ID.DIALOG_PREVIEW_GROUP, True)
+            self.LayoutChanged(ID.DIALOG_HIDDEN_PREVIEW)
             self._listView.listOfTexture.clear()
             path_list.clear()
             path_lists.clear()
@@ -1086,7 +1105,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
             mapID_list.clear()
             self._treegui.Refresh()
             self.Reset()
-            self.HideElement(ID.DIALOG_PREVIEW_GROUP, True)
 
         if id == ID.DIALOG_LIST_BUTTON:
             active_checkbox_list = []
@@ -2028,7 +2046,7 @@ class ReawoteMaterialLoader(plugins.CommandData):
             dialog = ReawoteMaterialDialog()
 
     def Execute(self, doc):
-        dialog.Open(dlgtype=c4d.DLG_TYPE_ASYNC, pluginid=REAWOTE_PLUGIN_ID, defaultw=475, defaulth=750, subid=1)
+        dialog.Open(dlgtype=c4d.DLG_TYPE_ASYNC, pluginid=REAWOTE_PLUGIN_ID, defaultw=475, defaulth=775, subid=1)
         return True
         
     def CoreMessage(self, id, msg):
