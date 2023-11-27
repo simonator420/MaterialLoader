@@ -645,11 +645,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
             return False
 
         if self.GroupBegin(ID.DIALOG_HIDDEN_PREVIEW, c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT):
-            self.GroupBorderSpace(10, 10, 10, 10)  # Optional spacing
+            self.GroupBorderSpace(5, 10, 0, 0)
 
             # Existing DIALOG_PREVIEW_GROUP wrapped inside the parent group
             if self.GroupBegin(ID.DIALOG_PREVIEW_GROUP, c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT, title="Material Preview"):
-                self.GroupBorderSpace(5, 5, 5, 5)  # Optional spacing for inner group
+                # self.GroupBorderSpace(5, 5, 5, 0)
 
                 # The rest of your DIALOG_PREVIEW_GROUP content goes here
                 self.AddUserArea(ID.DIALOG_MATERIAL_PREVIEW, c4d.BFH_CENTER, 60, 60)
