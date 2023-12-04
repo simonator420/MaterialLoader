@@ -639,7 +639,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.AddButton(ID.DIALOG_CLEAN_BUTTON, c4d.BFH_CENTER, 60, 5, "Clean")
         self.GroupEnd()
 
-        self._treegui = self.AddCustomGui(9300, c4d.CUSTOMGUI_TREEVIEW, "TreeView", c4d.BFV_SCALEFIT, 620, 280, customgui)
+        self._treegui = self.AddCustomGui(9300, c4d.CUSTOMGUI_TREEVIEW, "",  c4d.BFH_SCALEFIT, 300, 300, customgui)
         if not self._treegui:
             print ("[ERROR]: Could not create TreeView")
             return False
@@ -2046,7 +2046,7 @@ class ReawoteMaterialLoader(plugins.CommandData):
             dialog = ReawoteMaterialDialog()
 
     def Execute(self, doc):
-        dialog.Open(dlgtype=c4d.DLG_TYPE_ASYNC, pluginid=REAWOTE_PLUGIN_ID, defaultw=475, defaulth=775, subid=1)
+        dialog.Open(dlgtype=c4d.DLG_TYPE_ASYNC, pluginid=REAWOTE_PLUGIN_ID, defaultw=475, defaulth=830, subid=1)
         return True
         
     def CoreMessage(self, id, msg):
