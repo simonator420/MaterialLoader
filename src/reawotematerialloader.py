@@ -491,7 +491,7 @@ class ListView(c4d.gui.TreeViewFunctions):
     def SetCheck(self, root, userdata, obj, column, checked, msg):
         if checked:
             self.UpdateMaterialPreview(obj)
-            print("Checked")
+            # print("Checked")
             obj.Select()
         else:
             self.UpdateMaterialPreview(obj)
@@ -507,7 +507,7 @@ class ListView(c4d.gui.TreeViewFunctions):
         self.dialog_ref.HideElement(ID.DIALOG_PREVIEW_GROUP, False)
         self.dialog_ref.LayoutChanged(ID.DIALOG_HIDDEN_PREVIEW)
         
-        print(f"Updating preview for: {obj}")
+        # print(f"Updating preview for: {obj}")
         path = path_list[self.listOfTexture.index(obj)]
         
         if os.name == "posix":
@@ -523,7 +523,7 @@ class ListView(c4d.gui.TreeViewFunctions):
             contents = os.listdir(preview_path)
             for file in contents:
                 if "FABRIC_1" in file or "SPHERE_1" in file:
-                    print(os.path.join(preview_path, file))
+                    # print(os.path.join(preview_path, file))
                     if self.dialog_ref:
                         self.dialog_ref.set_preview_material(path=(os.path.join(preview_path, file)))
                     else:
@@ -580,7 +580,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         default_flags: int = c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT
 
-        self.SetTitle("REAWOTE PBR converter")
+        self.SetTitle("Reawote PBR Loader")
 
         self.ScrollGroupBegin(ID.DIALOG_SCROLL_GROUP, default_flags, c4d.SCROLLGROUP_VERT | c4d.SCROLLGROUP_HORIZ)
         self.GroupBegin(ID.DIALOG_MAIN_GROUP, default_flags, 1)
@@ -641,7 +641,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         self._treegui = self.AddCustomGui(9300, c4d.CUSTOMGUI_TREEVIEW, "",  c4d.BFH_SCALEFIT, 300, 300, customgui)
         if not self._treegui:
-            print ("[ERROR]: Could not create TreeView")
+            # print ("[ERROR]: Could not create TreeView")
             return False
 
         if self.GroupBegin(ID.DIALOG_HIDDEN_PREVIEW, c4d.BFH_SCALEFIT | c4d.BFV_SCALEFIT):
@@ -794,7 +794,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
             path_lists.append(path)
             self.SetString(ID.DIALOG_FOLDER_LIST, path)
-            print(path)
+            # print(path)
             dir = os.listdir(path)
             target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             same_path_dirs = []
@@ -802,9 +802,9 @@ class ReawoteMaterialDialog(gui.GeDialog):
             for root, dirs, files in os.walk(path):
                 for dir in dirs:
                     if dir in target_folders:
-                        print(dir)
+                        # print(dir)
                         same_path_dirs.append(os.path.join(root, dir))
-            print(f"These are same_path_dirs:", same_path_dirs)
+            # print(f"These are same_path_dirs:", same_path_dirs)
 
             for index, folder in enumerate(sorted(same_path_dirs)):
                 files = os.listdir(folder)
@@ -812,7 +812,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     file_name_parts = files[0].split("_")
                     folder_name = "_".join(file_name_parts[:3])
                 else:
-                    print("Files not found")
+                    # print("Files not found")
                     continue
                 folder_path = os.path.join(path, folder)
                 subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
@@ -822,11 +822,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 self._listView.listOfTexture.append(tex)
                 checkbox_list.append(tex)
                 path_list.append(folder_path)
-                print(tex)
-                print(folder_path)
-                print(f"{folder} checkbox was created and added to list.")
-                print(path_list)
-                print(" ")
+                # print(tex)
+                # print(folder_path)
+                # print(f"{folder} checkbox was created and added to list.")
+                # print(path_list)
+                # print(" ")
                 self._treegui.Refresh()
                 if folder_path:
                     dir_path = os.listdir(folder_path)
@@ -885,20 +885,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
             active_checkbox_list = []
 
-            if (c4d.plugins.FindPlugin(1036219)):
-                print("Je tady redshiiift")
-            else:
-                print("Neni tady redshiift")
-
-            if (c4d.plugins.FindPlugin(1036219)):
-                print("Je tady redshiiift")
-            else:
-                print("Neni tady redshiift")
-
-            if (c4d.plugins.FindPlugin(1029988)):
-                print("Je tady arnold")
-            else:
-                print("Neni tady arnold")
 
         if id == ID.DIALOG_SELECT_ALL_BUTTON:
 
@@ -921,9 +907,9 @@ class ReawoteMaterialDialog(gui.GeDialog):
         if id == ID.DIALOG_ADD_TO_QUEUE_BUTTON:
             path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
             path_lists.append(path)
-            print(path_lists)
+            # print(path_lists)
             self.SetString(ID.DIALOG_FOLDER_LIST, path)
-            print(path)
+            # print(path)
             dir = os.listdir(path)
             target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             same_path_dirs = []
@@ -933,14 +919,14 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 for dir in dirs:
                     if dir in target_folders:
                         same_path_dirs.append(os.path.join(root, dir))
-            print(f"These are same_path_dirs:", same_path_dirs)
+            # print(f"These are same_path_dirs:", same_path_dirs)
             for index, folder in enumerate(sorted(same_path_dirs)):
                 files = os.listdir(folder)
                 if files:
                     file_name_parts = files[0].split("_")
                     folder_name = "_".join(file_name_parts[:3])
                 else:
-                    print("Files not found")
+                    # print("Files not found")
                     continue
                 folder_path = os.path.join(path, folder)
                 subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
@@ -950,7 +936,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 self._listView.listOfTexture.append(tex)
                 checkbox_list.append(tex)
                 path_list.append(folder_path)
-                print(f"{folder} checkbox was created and added to list.")
+                # print(f"{folder} checkbox was created and added to list.")
                 self._treegui.Refresh()
                 if folder_path:
                     dir_path = os.listdir(folder_path)
@@ -1013,7 +999,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 checkbox_list.clear()
                 path_list.clear()
             self._treegui.Refresh()
-            print(f"Path list: {path_list}")
+            # print(f"Path list: {path_list}")
             for path in path_lists:
                 dir = os.listdir(path)
                 target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
@@ -1036,7 +1022,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     self._listView.listOfTexture.append(tex)
                     checkbox_list.append(tex)
                     path_list.append(folder_path)
-                    print(f"{folder} checkbox was created and added to list.")
+                    # print(f"{folder} checkbox was created and added to list.")
                     self._treegui.Refresh()
                     if folder_path:
                         dir_path = os.listdir(folder_path)
@@ -1116,8 +1102,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     active_checkbox_list.append(index)
                     folder_path = path_list[index]
                     if folder_path:
-                            print(checkbox_list)
-                            print(checkbox)
+                            # print(checkbox_list)
+                            # print(checkbox)
                             has_color = False
                             load_AO = self.GetBool(ID.DIALOG_MAP_AO_CB)
                             load_displ = self.GetBool(ID.DIALOG_MAP_DISPL_CB)
@@ -1149,7 +1135,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     if not file[0].isalpha():
                                         continue
                                     fullpath = os.path.join(folder_path, file)
-                                    print(f"MapID list: {mapID_list}")
+                                    # print(f"MapID list: {mapID_list}")
                                     parts = file.split(".")[0].split("_")
                                     mat.SetName("_".join(parts[0:3]))
                                     mapID = parts[3]
@@ -1280,7 +1266,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     if not file[0].isalpha():
                                         continue
                                     fullpath = os.path.join(folder_path, file)
-                                    print(f"MapID list: {mapID_list}")
+                                    # print(f"MapID list: {mapID_list}")
                                     parts = file.split(".")[0].split("_")
                                     mat.SetName("_".join(parts[0:3]))
                                     mapID = parts[3]
@@ -1464,7 +1450,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     if not file[0].isalpha():
                                         continue
                                     fullpath = os.path.join(folder_path, file)
-                                    print(f"MapID list: {mapID_list}")
+                                    # print(f"MapID list: {mapID_list}")
                                     parts = file.split(".")[0].split("_")
                                     mat.SetName("_".join(parts[0:3]))
                                     mapID = parts[3]
@@ -1646,7 +1632,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                 for file in dir:
                                     if not file[0].isalpha():
                                         continue
-                                    print(f"MapID list: {mapID_list}")
+                                    # print(f"MapID list: {mapID_list}")
                                     parts = file.split(".")[0].split("_")
                                     mapID = parts[3]
                                     fullpath = os.path.join(folder_path, file)
@@ -1885,7 +1871,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     if not file[0].isalpha():
                                         continue
                                     fullpath = os.path.join(folder_path, file)
-                                    print(f"MapID list: {mapID_list}")
+                                    # print(f"MapID list: {mapID_list}")
                                     parts = file.split(".")[0].split("_")
                                     mat.SetName("_".join(parts[0:3]))
                                     mapID = parts[3]
@@ -2046,14 +2032,13 @@ class ReawoteMaterialLoader(plugins.CommandData):
             dialog = ReawoteMaterialDialog()
 
     def Execute(self, doc):
-        # Width on macOS 800
         dialog.Open(dlgtype=c4d.DLG_TYPE_ASYNC, pluginid=REAWOTE_PLUGIN_ID, defaultw=475, defaulth=830, subid=1)
         return True
         
     def CoreMessage(self, id, msg):
         if id==REAWOTE_PLUGIN_ID:
-            print("Command received!")
-            print("Path is: " + self.thread.path)
+            # print("Command received!")
+            # print("Path is: " + self.thread.path)
             return True
 
         return gui.GeDialog.CoreMessage(self, id, msg)

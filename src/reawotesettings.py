@@ -70,7 +70,7 @@ class SettingsDialog(c4d.gui.GeDialog):
             self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, ID.OCTANE_RENDERER)
         return True
     def CreateLayout(self):
-        self.SetTitle("PBR Loader Settings")
+        self.SetTitle("Reawote PBR Loader Settings")
 
         self.GroupBegin(ID.DIALOG_GROUP,  c4d.BFH_SCALEFIT, 2, 1, "Renderer", 0, 10, 10)
         self.GroupBorderSpace(5, 10, 5, 18)
