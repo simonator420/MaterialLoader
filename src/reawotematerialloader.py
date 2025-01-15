@@ -71,8 +71,6 @@ class ID():
     DIALOG_FOLDER_GROUP = 100000
     DIALOG_FOLDER_TEXT =  100001
     DIALOG_FOLDER_BUTTON = 100002
-    DIALOG_FOLDER_SECONDARY_BUTTON = 100031
-
 
     DIALOG_MAP_AO_CB = 100003
     DIALOG_MAP_DISPL_CB = 100004
@@ -588,21 +586,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.GroupBegin(ID.DIALOG_MAIN_GROUP, default_flags, 1)
         self.GroupBorderSpace(15, 0, 0, 0)
 
-        # self.GroupBegin(ID.DIALOG_FOLDER_GROUP, c4d.BFH_SCALEFIT, 3, 1, "Material folder", 0, 10, 10)
-        # self.AddStaticText(ID.DIALOG_FOLDER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Material folder", 0)
-        # self.AddButton(ID.DIALOG_FOLDER_BUTTON, c4d.BFH_RIGHT, inith=10, initw=250, name="Browse")
-        # self.GroupEnd()
-
-        self.GroupBegin(ID.DIALOG_FOLDER_GROUP, c4d.BFH_SCALEFIT, 2, 1, "Material folder", 0)
-        self.AddStaticText(ID.DIALOG_FOLDER_TEXT, c4d.BFH_SCALEFIT, name="Material folder", initw=100)
-
-        # Nested group for buttons, aligned vertically
-        self.GroupBegin(0, c4d.BFH_SCALEFIT, 1, 2, "", 0)  # Anonymous group for buttons
-        self.AddButton(ID.DIALOG_FOLDER_BUTTON, c4d.BFH_SCALEFIT, name="Browse", inith=10, initw=250)
-        self.AddButton(ID.DIALOG_FOLDER_SECONDARY_BUTTON, c4d.BFH_SCALEFIT, name="Browse 1", inith=10, initw=250)  # New Button
+        self.GroupBegin(ID.DIALOG_FOLDER_GROUP, c4d.BFH_SCALEFIT, 3, 1, "Material folder", 0, 10, 10)
+        self.AddStaticText(ID.DIALOG_FOLDER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Material folder", 0)
+        self.AddButton(ID.DIALOG_FOLDER_BUTTON, c4d.BFH_RIGHT, inith=10, initw=250, name="Browse")
         self.GroupEnd()
-
-        self.GroupEnd()  # End of DIALOG_FOLDER_GROUP
 
         self.GroupBegin(ID.DIALOG_GROUP_RENDERER,  c4d.BFH_SCALEFIT, 3, 1, "Renderer", 0, 10, 10)
         self.AddStaticText(ID.DIALOG_RENDERER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Select Renderer", 0)
@@ -787,7 +774,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                   defaulth=380,
                                   subid=1)
 
-        # function for filling up the listview with materials
         if id == ID.DIALOG_FOLDER_BUTTON:
             path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
             if path == None:
@@ -807,13 +793,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
             self._treegui.Refresh()
 
             path_lists.append(path)
-            target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             self.SetString(ID.DIALOG_FOLDER_LIST, path)
             # print(path)
             dir = os.listdir(path)
-
-            #bitmaps = [file for file in dir if os.path.isfile(os.path.join(path, file))]
-
+            target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             same_path_dirs = []
             folder_dict = {}
             for root, dirs, files in os.walk(path):
@@ -902,66 +885,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
             active_checkbox_list = []
 
-        if id == ID.DIALOG_FOLDER_SECONDARY_BUTTON:
-            path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
-            if path == None:
-                return True
-            #python2
-            try:
-                path = path.decode("utf-8")
-            except: 
-                pass
-            self.Reset() 
-
-            self._listView.listOfTexture.clear()
-            path_list.clear()
-            path_lists.clear()
-            checkbox_list.clear()
-
-            all_mat_list = []
-            material_dict = {}
-            mat_count = 0
-
-            path_lists.append(path)
-            target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
-            self.SetString(ID.DIALOG_FOLDER_LIST, path)
-            # print(path)
-            dir = os.listdir(path)
-            dir.sort()
-            print(f"Tohle je serazeny dir : {dir}")
-            print("")
-            print("")
-
-            for file in dir:
-                print(f"Tohle je file {file}")
-                if os.path.isfile(os.path.join(path, file)):
-                    try:
-                        parts = file.split("_")
-                        if len(parts) >= 3:
-                            material_base_name = "_".join(parts[:3])
-                        file_full_path = os.path.join(path, file)
-                        print(f"Tohle je file_full_path {file_full_path}")
-                        print(f"Tohle je material_base_name {material_base_name}")
-                        if material_base_name not in material_dict:
-                            material_dict[material_base_name] = [file_full_path]
-                        else:
-                            material_dict[material_base_name].append(file_full_path)
-                    except:
-                        print("Tak tohle passuju")
-                        pass
-                    print(" ")
-
-            print(f"Tohle je material_dict a ne material_dict: {material_dict}")
-            for file in material_dict.keys():
-                newID = len(self._listView.listOfTexture) + 1
-                tex = TextureObject(file.format(newID))
-                self._listView.listOfTexture.append(tex)
-                self._treegui.Refresh()
-                print(f"pridavam tenhle key: {file}")
-
-            for files in material_dict.values():
-                all_mat_list.append(files)
-            print(f"Tohle je all_mat_list: {all_mat_list}")
 
         if id == ID.DIALOG_SELECT_ALL_BUTTON:
 
@@ -1169,7 +1092,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
             self._treegui.Refresh()
             self.Reset()
 
-        # the main function for importing materials
         if id == ID.DIALOG_LIST_BUTTON:
             active_checkbox_list = []
             target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
