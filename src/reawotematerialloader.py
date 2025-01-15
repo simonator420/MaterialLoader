@@ -814,8 +814,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
             
             self._treegui.Refresh()
 
-            path_lists.append(path)
-            self.SetString(ID.DIALOG_FOLDER_LIST, path)
             # print(path)
             dir = os.listdir(path)
             target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
@@ -828,14 +826,42 @@ class ReawoteMaterialDialog(gui.GeDialog):
                         same_path_dirs.append(os.path.join(root, dir))
             # print(f"These are same_path_dirs:", same_path_dirs)
 
+            has_image_files = False
+            for folder in same_path_dirs:
+                files = os.listdir(folder)
+                image_files = [f for f in files if f.lower().endswith(('.jpg', '.tif', '.png'))]
+                if image_files:
+                    has_image_files = True
+                    self.SetString(ID.DIALOG_FOLDER_LIST, path)
+                    break  # Stop checking further once an image file is found
+
+            # Skip processing if no image files are found in any folder
+            if not has_image_files:
+                print("No materials found in the selected folders, skipping all processing.")
+                self.SetString(ID.DIALOG_FOLDER_LIST, "No materials found in the selected folders.")
+                return True
+
+            # Store selected path only after verifying image files exist
+            path_lists.append(path)
+
+            # Process folders with image files
             for index, folder in enumerate(sorted(same_path_dirs)):
                 files = os.listdir(folder)
-                if files:
-                    file_name_parts = files[0].split("_")
-                    folder_name = "_".join(file_name_parts[:3])
-                else:
-                    # print("Files not found")
+                # Filter image files
+                image_files = [f for f in files if f.lower().endswith(('.jpg', '.tif', '.png'))]
+
+                if not image_files:
                     continue
+                
+                if "_" in image_files[0]:
+                    file_parts = image_files[0].split("_")
+                    if len(file_parts) > 2:
+                        folder_name = "_".join(file_parts[:3])  # Join the first three parts
+                    else:
+                        folder_name = "_".join(file_parts)  # Use the full name if less than 3 parts
+                else:
+                    folder_name = image_files[0]
+                
                 folder_path = os.path.join(path, folder)
                 subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
                 folder_dict[folder] = True
@@ -927,10 +953,10 @@ class ReawoteMaterialDialog(gui.GeDialog):
             self._treegui.Refresh()
             
             path_lists.append(path)
-            self.SetString(ID.DIALOG_FOLDER_LIST, path)
             target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             same_path_dirs = []
             folder_dict = {}
+            
             for root, dirs, files in os.walk(path):
                 for dir in dirs:
                     if dir in target_folders:
@@ -938,15 +964,35 @@ class ReawoteMaterialDialog(gui.GeDialog):
                         same_path_dirs.append(os.path.join(root, dir))
             print(f"These are same_path_dirs:", same_path_dirs)
             
+            # Preliminary check for .hdr files in all target folders
+            has_hdr_files = False
+            for folder in same_path_dirs:
+                files = os.listdir(folder)
+                hdr_files = [f for f in files if f.lower().endswith('.hdr')]
+                if hdr_files:
+                    has_hdr_files = True
+                    self.SetString(ID.DIALOG_FOLDER_LIST, path)
+                    break  # Stop checking further once a .hdr file is found
+
+            # Skip processing if no .hdr files are found in any folder
+            if not has_hdr_files:
+                print("No .hdr files found in the selected folders, skipping all processing.")
+                self.SetString(ID.DIALOG_FOLDER_LIST, "No .hdr files found in the selected folder(s).")
+                return True
+            
             for index, folder in enumerate(sorted(same_path_dirs)):
                 files = os.listdir(folder)
-                files = [f for f in files if f != '.DS_Store' and f.lower().endswith(('.hdr', '.exr'))]
-                print(f"Tohle jsou files {files}")
-                if files:
-                    folder_name = files[0].rpartition("_")[0]
-                else:
-                    print("Files not found")
+                # Filter for .hdr files only
+                hdr_files = [f for f in files if f.lower().endswith('.hdr')]
+                
+                # Skip processing if no .hdr files are found
+                if not hdr_files:
+                    print(f"No .hdr files found in {folder}, skipping.")
                     continue
+                
+                print(f"Tohle jsou HDR files: {hdr_files}")
+                
+                folder_name = hdr_files[0].rpartition("_")[0]
                 folder_path = os.path.join(path, folder)
                 subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
                 folder_dict[folder] = True
@@ -1089,29 +1135,50 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
                 same_path_dirs = []
                 folder_dict = {}
+                
                 for root, dirs, files in os.walk(path):
                     for dir in dirs:
                         if dir in target_folders:
                             same_path_dirs.append(os.path.join(root, dir))
+                            
                 for index, folder in enumerate(sorted(same_path_dirs)):
                     files = os.listdir(folder)
-                    if files:
+                    
+                    # Determine whether to process as HDRI or material
+                    hdr_files = [f for f in files if f.lower().endswith('.hdr')]
+                    image_files = [f for f in files if f.lower().endswith(('.png', '.tif', '.jpg'))]
+                    
+                    if hdr_files and not image_files:
+                        # Process as HDRI
+                        print(f"Processing HDRI folder: {folder}")
+                        folder_name = hdr_files[0].rpartition("_")[0]
+                        folder_path = os.path.join(path, folder)
+                        subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
+                        folder_dict[folder] = True
+                        newID = len(self._listView.listOfTexture) + 1
+                        tex = TextureObject(folder_name.format(newID))
+                        self._listView.listOfTexture.append(tex)
+                        checkbox_list.append(tex)
+                        path_list.append(folder_path)
+                        self._treegui.Refresh()
+                    
+                    else:
                         file_name_parts = files[0].split("_")
                         folder_name = "_".join(file_name_parts[:3])
-                    folder_path = os.path.join(path, folder)
-                    subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
-                    folder_dict[folder] = True
-                    newID = len(self._listView.listOfTexture) + 1
-                    tex = TextureObject(folder_name.format(newID))
-                    self._listView.listOfTexture.append(tex)
-                    checkbox_list.append(tex)
-                    path_list.append(folder_path)
-                    # print(f"{folder} checkbox was created and added to list.")
-                    self._treegui.Refresh()
-                    if folder_path:
-                        dir_path = os.listdir(folder_path)
-                        has_color = False
-                        for file in dir_path:
+                        folder_path = os.path.join(path, folder)
+                        subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
+                        folder_dict[folder] = True
+                        newID = len(self._listView.listOfTexture) + 1
+                        tex = TextureObject(folder_name.format(newID))
+                        self._listView.listOfTexture.append(tex)
+                        checkbox_list.append(tex)
+                        path_list.append(folder_path)
+                        # print(f"{folder} checkbox was created and added to list.")
+                        self._treegui.Refresh()
+                        if folder_path:
+                            dir_path = os.listdir(folder_path)
+                            has_color = False
+                            for file in dir_path:
                                 try: 
                                     parts = file.split(".")[0].split("_")
                                     manufacturer = parts[0]
@@ -1134,27 +1201,28 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                         self.has_16b_normal = True
                                 except:
                                     pass
-                        if self.has_AO:
-                            self.SetBool(ID.DIALOG_MAP_AO_CB, True)
-                            self.Enable(ID.DIALOG_MAP_AO_CB, True)
-                        if self.has_disp:
-                            self.SetBool(ID.DIALOG_MAP_DISPL_CB, True)
-                            self.Enable(ID.DIALOG_MAP_DISPL_CB, True)
-                        if self.has_16b_disp:
-                            self.SetBool(ID.DIALOG_MAP_16B_DISPL_CB, True)
-                            self.Enable(ID.DIALOG_MAP_16B_DISPL_CB, True)
-                        if self.has_16b_normal:
-                            self.SetBool(ID.DIALOG_MAP_16B_NORMAL_CB, True)
-                            self.Enable(ID.DIALOG_MAP_16B_NORMAL_CB, True)
-                        if self.has_Ior:
-                            self.SetBool(ID.DIALOG_MAP_IOR_CB, False)
-                            self.Enable(ID.DIALOG_MAP_IOR_CB, True)
-                        if has_color:
-                            self.material_folder = path
-                            self.Enable(ID.DIALOG_LOAD_BUTTON, True)
-                            self.SetError("")
-                        else:
-                            self.SetError("One or more folders do not contain the correct Reawote material.")
+                            
+                            if self.has_AO:
+                                self.SetBool(ID.DIALOG_MAP_AO_CB, True)
+                                self.Enable(ID.DIALOG_MAP_AO_CB, True)
+                            if self.has_disp:
+                                self.SetBool(ID.DIALOG_MAP_DISPL_CB, True)
+                                self.Enable(ID.DIALOG_MAP_DISPL_CB, True)
+                            if self.has_16b_disp:
+                                self.SetBool(ID.DIALOG_MAP_16B_DISPL_CB, True)
+                                self.Enable(ID.DIALOG_MAP_16B_DISPL_CB, True)
+                            if self.has_16b_normal:
+                                self.SetBool(ID.DIALOG_MAP_16B_NORMAL_CB, True)
+                                self.Enable(ID.DIALOG_MAP_16B_NORMAL_CB, True)
+                            if self.has_Ior:
+                                self.SetBool(ID.DIALOG_MAP_IOR_CB, False)
+                                self.Enable(ID.DIALOG_MAP_IOR_CB, True)
+                            if has_color:
+                                self.material_folder = path
+                                self.Enable(ID.DIALOG_LOAD_BUTTON, True)
+                                self.SetError("")
+                            else:
+                                self.SetError("One or more folders do not contain the correct Reawote material.")
                     self.Enable(ID.DIALOG_LIST_BUTTON_MATERIAL, True)
                     self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
                     self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
@@ -2077,9 +2145,12 @@ class ReawoteMaterialDialog(gui.GeDialog):
     def Reset(self):
         
         self.SetString(ID.DIALOG_FOLDER_LIST, "")
+        self.Enable(ID.DIALOG_FOLDER_BUTTON_MATERIAL, True)
+        self.Enable(ID.DIALOG_FOLDER_BUTTON_HDRI, True)
         self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, False)
         self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, False)
         self.Enable(ID.DIALOG_LIST_BUTTON_MATERIAL, False)
+        self.Enable(ID.DIALOG_LIST_BUTTON_HDRI, False)
         self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, False)
         self.Enable(ID.DIALOG_CLEAN_BUTTON, False)
 
