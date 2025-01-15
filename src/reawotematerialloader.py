@@ -68,9 +68,9 @@ IDS_DIALOG_LOAD = 10006
 IDS_DIALOG_USE_16_BIT_NORMAL_MAPS = 10007
 
 class ID(): 
-    DIALOG_FOLDER_GROUP = 100000
-    DIALOG_FOLDER_TEXT =  100001
-    DIALOG_FOLDER_BUTTON = 100002
+    DIALOG_FOLDER_GROUP_MATERIAL = 100000
+    DIALOG_FOLDER_TEXT_MATERIAL =  100001
+    DIALOG_FOLDER_BUTTON_MATERIAL = 100002
 
     DIALOG_MAP_AO_CB = 100003
     DIALOG_MAP_DISPL_CB = 100004
@@ -85,7 +85,8 @@ class ID():
     DIALOG_SCROLL_GROUP_TWO = 100016
     DIALOG_SECONDARY_GROUP = 10011
     DIALOG_FOLDER_LIST = 100015
-    DIALOG_LIST_BUTTON = 100017
+    DIALOG_LIST_BUTTON_MATERIAL = 100017
+    DIALOG_LIST_BUTTON_HDRI = 100034
     DIALOG_LIST_CHECKBOX = 100013
     DIALOG_LIST_MINI_BUTTONS = 100020
     DIALOG_SELECT_ALL_BUTTON = 100018
@@ -101,6 +102,10 @@ class ID():
     DIALOG_MATERIAL_PREVIEW = 100028
     DIALOG_PREVIEW_TEXT = 100029
     DIALOG_HIDDEN_PREVIEW = 100030
+    
+    DIALOG_FOLDER_GROUP_HDRI = 100031
+    DIALOG_FOLDER_TEXT_HDRI = 100032
+    DIALOG_FOLDER_BUTTON_HDRI = 100033
 
     PLUGINID_CORONA4D_MATERIAL = 1032100
     PLUGINID_CORONA4D_NORMALSHADER = 1035405
@@ -513,22 +518,32 @@ class ListView(c4d.gui.TreeViewFunctions):
         if os.name == "posix":
             path_parts = path.split(os.path.sep)[:-1]
             preview_path = os.path.sep.join(path_parts) + os.path.sep + "PREVIEW"
+            previews_path = os.path.sep.join(path_parts) + os.path.sep + "PREVIEWS"
 
         if os.name == "nt":
             path_parts = path.split(os.path.sep)[:-1]
             preview_path = os.path.sep.join(path_parts) + os.path.sep + "PREVIEW"
 
         self.dialog_ref.SetString(ID.DIALOG_PREVIEW_TEXT, f"  {obj}")
-        if os.path.exists(preview_path):
-            contents = os.listdir(preview_path)
+        if os.path.exists(preview_path) or os.path.exists(previews_path):
+            active_preview_path = preview_path if os.path.exists(preview_path) else previews_path
+            
+            contents = os.listdir(active_preview_path)
             for file in contents:
                 if "FABRIC_1" in file or "SPHERE_1" in file:
                     # print(os.path.join(preview_path, file))
                     if self.dialog_ref:
-                        self.dialog_ref.set_preview_material(path=(os.path.join(preview_path, file)))
+                        self.dialog_ref.set_preview_material(path=(os.path.join(active_preview_path, file)))
                     else:
                         print("Failed to load bitmap from:", path)
-                    break  # Exit the loop once we've found and processed the file
+                    break
+                
+                if "PLANE" in file:
+                    if self.dialog_ref:
+                        self.dialog_ref.set_preview_material(path=(os.path.join(active_preview_path, file)))
+                    else:
+                        print("Failed to load HDRI bitmap from:", path)
+                    break
         else:
             print(f"The directory {preview_path} does not exist.")
 
@@ -586,9 +601,14 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.GroupBegin(ID.DIALOG_MAIN_GROUP, default_flags, 1)
         self.GroupBorderSpace(15, 0, 0, 0)
 
-        self.GroupBegin(ID.DIALOG_FOLDER_GROUP, c4d.BFH_SCALEFIT, 3, 1, "Material folder", 0, 10, 10)
-        self.AddStaticText(ID.DIALOG_FOLDER_TEXT, c4d.BFH_SCALEFIT, 0, 0, "Material folder", 0)
-        self.AddButton(ID.DIALOG_FOLDER_BUTTON, c4d.BFH_RIGHT, inith=10, initw=250, name="Browse")
+        self.GroupBegin(ID.DIALOG_FOLDER_GROUP_MATERIAL, c4d.BFH_SCALEFIT, 3, 1, "Material folder", 0, 10, 10)
+        self.AddStaticText(ID.DIALOG_FOLDER_TEXT_MATERIAL, c4d.BFH_SCALEFIT, 0, 0, "Material folder", 0)
+        self.AddButton(ID.DIALOG_FOLDER_BUTTON_MATERIAL, c4d.BFH_RIGHT, inith=10, initw=250, name="Browse materials")
+        self.GroupEnd()
+        
+        self.GroupBegin(ID.DIALOG_FOLDER_GROUP_HDRI, c4d.BFH_SCALEFIT, 3, 1, "HDRI folder", 0, 10, 10)
+        self.AddStaticText(ID.DIALOG_FOLDER_TEXT_HDRI, c4d.BFH_SCALEFIT, 0, 0, "HDRI folder", 0)
+        self.AddButton(ID.DIALOG_FOLDER_BUTTON_HDRI, c4d.BFH_RIGHT, inith=10, initw=250, name="Browse HDRI")
         self.GroupEnd()
 
         self.GroupBegin(ID.DIALOG_GROUP_RENDERER,  c4d.BFH_SCALEFIT, 3, 1, "Renderer", 0, 10, 10)
@@ -631,7 +651,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
         customgui.SetBool(c4d.TREEVIEW_CURSORKEYS, True)
         customgui.SetBool(c4d.TREEVIEW_NOENTERRENAME, False)
 
-        self.AddButton(ID.DIALOG_LIST_BUTTON, c4d.BFH_SCALEFIT, 1, 1, "Load selected materials")
+        self.AddButton(ID.DIALOG_LIST_BUTTON_MATERIAL, c4d.BFH_SCALEFIT, 1, 1, "Load selected materials")
+        self.AddButton(ID.DIALOG_LIST_BUTTON_HDRI, c4d.BFH_SCALEFIT, 1, 1, "Load selected HDRI")
         self.GroupBegin(ID.DIALOG_LIST_MINI_BUTTONS, c4d.BFH_LEFT, 4,1, "Mini buttons", 0, 10, 10)
         self.AddButton(ID.DIALOG_SELECT_ALL_BUTTON, c4d.BFH_LEFT, 70, 5, "Select All")
         self.AddButton(ID.DIALOG_REFRESH_ALL_BUTTON, c4d.BFH_LEFT, 60, 5, "Refresh")
@@ -710,7 +731,8 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         self.Enable(ID.DIALOG_LOAD_BUTTON, False)
 
-        self.Enable(ID.DIALOG_LIST_BUTTON, False)
+        self.Enable(ID.DIALOG_LIST_BUTTON_MATERIAL, False)
+        self.Enable(ID.DIALOG_LIST_BUTTON_HDRI, False)
         self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, False)
         self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, False)
         self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, False)
@@ -774,7 +796,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                   defaulth=380,
                                   subid=1)
 
-        if id == ID.DIALOG_FOLDER_BUTTON:
+        if id == ID.DIALOG_FOLDER_BUTTON_MATERIAL:
             path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
             if path == None:
                 return True
@@ -822,11 +844,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 self._listView.listOfTexture.append(tex)
                 checkbox_list.append(tex)
                 path_list.append(folder_path)
-                # print(tex)
-                # print(folder_path)
-                # print(f"{folder} checkbox was created and added to list.")
-                # print(path_list)
-                # print(" ")
+                print(f"Tohle je tex: {tex}")
+                print(f"Tohle je folder_path: {folder_path}")
+                print(f"{folder} checkbox was created and added to list.")
+                print(path_list)
+                print(" ")
                 self._treegui.Refresh()
                 if folder_path:
                     dir_path = os.listdir(folder_path)
@@ -875,17 +897,79 @@ class ReawoteMaterialDialog(gui.GeDialog):
                         self.SetError("")
                     # else:
                     #     self.SetError("One or more folders do not contain the correct Reawote material.")
-            self.Enable(ID.DIALOG_LIST_BUTTON, True)
+            self.Enable(ID.DIALOG_LIST_BUTTON_MATERIAL, True)
             self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
             self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
             self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, True)
             self.Enable(ID.DIALOG_CLEAN_BUTTON, True)
             self.Enable(ID.DIALOG_RENDERER_COMBOBOX, True)
+            self.Enable(ID.DIALOG_FOLDER_BUTTON_HDRI, False)
             # self.SetInt32(ID.DIALOG_RENDERER_COMBOBOX, 6400)
 
             active_checkbox_list = []
-
-
+            
+        if id == ID.DIALOG_FOLDER_BUTTON_HDRI:
+            path = c4d.storage.LoadDialog(title="Choose HDRI folder", flags=c4d.FILESELECT_DIRECTORY)
+            if path == None:
+                return True
+            #python2
+            try:
+                path = path.decode("utf-8")
+            except: 
+                pass
+            self.Reset() 
+            
+            self._listView.listOfTexture.clear()
+            path_list.clear()
+            path_lists.clear()
+            checkbox_list.clear()
+            
+            self._treegui.Refresh()
+            
+            path_lists.append(path)
+            self.SetString(ID.DIALOG_FOLDER_LIST, path)
+            target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
+            same_path_dirs = []
+            folder_dict = {}
+            for root, dirs, files in os.walk(path):
+                for dir in dirs:
+                    if dir in target_folders:
+                        # print(dir)
+                        same_path_dirs.append(os.path.join(root, dir))
+            print(f"These are same_path_dirs:", same_path_dirs)
+            
+            for index, folder in enumerate(sorted(same_path_dirs)):
+                files = os.listdir(folder)
+                files = [f for f in files if f != '.DS_Store' and f.lower().endswith(('.hdr', '.exr'))]
+                print(f"Tohle jsou files {files}")
+                if files:
+                    folder_name = files[0].rpartition("_")[0]
+                else:
+                    print("Files not found")
+                    continue
+                folder_path = os.path.join(path, folder)
+                subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
+                folder_dict[folder] = True
+                newID = len(self._listView.listOfTexture) + 1
+                tex = TextureObject(folder_name.format(newID))
+                self._listView.listOfTexture.append(tex)
+                checkbox_list.append(tex)
+                path_list.append(folder_path)
+                print(tex)
+                print(folder_path)
+                print(f"{folder} checkbox was created and added to list.")
+                print(path_list)
+                print(" ")
+                self._treegui.Refresh()
+                
+            self.Enable(ID.DIALOG_LIST_BUTTON_HDRI, True)
+            self.Enable(ID.DIALOG_FOLDER_BUTTON_MATERIAL, False)
+            self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
+            self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
+            self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, True)
+            self.Enable(ID.DIALOG_CLEAN_BUTTON, True)
+            self.Enable(ID.DIALOG_RENDERER_COMBOBOX, True)
+            
         if id == ID.DIALOG_SELECT_ALL_BUTTON:
 
             self.HideElement(ID.DIALOG_PREVIEW_GROUP, True)
@@ -985,7 +1069,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                         self.SetError("")
                     else:
                         self.SetError("One or more folders do not contain the correct Reawote material.")
-                self.Enable(ID.DIALOG_LIST_BUTTON, True)
+                self.Enable(ID.DIALOG_LIST_BUTTON_MATERIAL, True)
                 self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
                 self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
                 self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, True)
@@ -1071,7 +1155,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             self.SetError("")
                         else:
                             self.SetError("One or more folders do not contain the correct Reawote material.")
-                    self.Enable(ID.DIALOG_LIST_BUTTON, True)
+                    self.Enable(ID.DIALOG_LIST_BUTTON_MATERIAL, True)
                     self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
                     self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
                     self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, True)
@@ -1092,7 +1176,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
             self._treegui.Refresh()
             self.Reset()
 
-        if id == ID.DIALOG_LIST_BUTTON:
+        if id == ID.DIALOG_LIST_BUTTON_MATERIAL:
             active_checkbox_list = []
             target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             folder_dict = {}
@@ -1995,7 +2079,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.SetString(ID.DIALOG_FOLDER_LIST, "")
         self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, False)
         self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, False)
-        self.Enable(ID.DIALOG_LIST_BUTTON, False)
+        self.Enable(ID.DIALOG_LIST_BUTTON_MATERIAL, False)
         self.Enable(ID.DIALOG_ADD_TO_QUEUE_BUTTON, False)
         self.Enable(ID.DIALOG_CLEAN_BUTTON, False)
 
@@ -2018,7 +2102,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.Enable(ID.DIALOG_RENDERER_COMBOBOX, False)
 
         self.Enable(ID.DIALOG_LOAD_BUTTON, False)
-        # self.Enable(ID.DIALOG_LIST_BUTTON, False)
+        # self.Enable(ID.DIALOG_LIST_BUTTON_MATERIAL, False)
         
 
 class ReawoteMaterialLoader(plugins.CommandData):
