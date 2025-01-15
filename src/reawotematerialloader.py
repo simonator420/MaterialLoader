@@ -952,7 +952,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
             
             self._treegui.Refresh()
             
-            path_lists.append(path)
             target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
             same_path_dirs = []
             folder_dict = {}
@@ -972,6 +971,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 if hdr_files:
                     has_hdr_files = True
                     self.SetString(ID.DIALOG_FOLDER_LIST, path)
+                    path_lists.append(path)
                     break  # Stop checking further once a .hdr file is found
 
             # Skip processing if no .hdr files are found in any folder
@@ -1036,6 +1036,21 @@ class ReawoteMaterialDialog(gui.GeDialog):
 
         if id == ID.DIALOG_ADD_TO_QUEUE_BUTTON:
             path = c4d.storage.LoadDialog(title="Choose material folder", flags=c4d.FILESELECT_DIRECTORY)
+            if path is None:
+                return True
+            
+            has_hdr_files_in_list = False
+            has_other_files_in_list = False
+            
+            for existing_path in path_list:
+                files = os.listdir(existing_path)
+                if any(f.lower().endswith('.hdr') for f in files):
+                    has_hdr_files_in_list = True
+                if any(not f.lower().endswith('.hdr') and not f.startswith('.') for f in files):
+                    has_other_files_in_list = True
+                    
+            
+            
             path_lists.append(path)
             # print(path_lists)
             self.SetString(ID.DIALOG_FOLDER_LIST, path)
@@ -1049,72 +1064,107 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 for dir in dirs:
                     if dir in target_folders:
                         same_path_dirs.append(os.path.join(root, dir))
+                        
             # print(f"These are same_path_dirs:", same_path_dirs)
             for index, folder in enumerate(sorted(same_path_dirs)):
                 files = os.listdir(folder)
-                if files:
+                hdr_files = [f for f in files if f.lower().endswith('.hdr')]
+                print(f"Tohle jsou hdr_files {hdr_files}")
+                other_files = [f for f in files if not f.lower().endswith('.hdr') and not f.startswith('.')]
+                print(f"Tohle jsou other_files {other_files}")
+                
+                if has_hdr_files_in_list and not hdr_files:
+                    print(f"Skipping {folder} because it does not contain HDR files.")
+                    continue
+                if has_other_files_in_list and not other_files:
+                    print(f"Skipping {folder} because it does not contain other supported files.")
+                    continue
+                
+                if hdr_files and not other_files:
+                    print(f"Adding HDR files from {folder}")
+                    folder_name = hdr_files[0].rpartition("_")[0]
+                    folder_path = os.path.join(path, folder)
+                    subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
+                    folder_dict[folder] = True
+                    newID = len(self._listView.listOfTexture) + 1
+                    tex = TextureObject(folder_name.format(newID))
+                    self._listView.listOfTexture.append(tex)
+                    checkbox_list.append(tex)
+                    path_list.append(folder_path)
+                    self._treegui.Refresh()
+                    
+                elif other_files:
+                    image_files = [f for f in files if not f.lower().endswith('.hdr') and not f.startswith('.')]
+
+                    if not image_files:
+                        continue
+                    
                     file_name_parts = files[0].split("_")
                     folder_name = "_".join(file_name_parts[:3])
+                    
+                    folder_path = os.path.join(path, folder)
+                    
+                    subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
+                    folder_dict[folder] = True
+                    newID = len(self._listView.listOfTexture) + 1
+                    tex = TextureObject(folder_name.format(newID))
+                    self._listView.listOfTexture.append(tex)
+                    checkbox_list.append(tex)
+                    path_list.append(folder_path)
+                    # print(f"{folder} checkbox was created and added to list.")
+                    self._treegui.Refresh()
+                    if folder_path:
+                        dir_path = os.listdir(folder_path)
+                        has_color = False
+                        for file in dir_path:
+                                try: 
+                                    parts = file.split(".")[0].split("_")
+                                    manufacturer = parts[0]
+                                    product_number = parts[1]
+                                    product = parts[2]
+                                    mapID = parts[3]
+                                    resolution = parts[4]
+                                    if mapID == "DIFF" or mapID == "COLOR" or mapID == "COL":
+                                        has_color = True
+                                    if mapID == "DISP16":
+                                        self.has_16b_disp = True
+                                        self.has_disp = True
+                                    if mapID == "DISP":
+                                        self.has_disp = True
+                                    if mapID == "AO":
+                                        self.has_AO = True
+                                    if mapID == "IOR":
+                                        self.has_Ior = True
+                                    if mapID == "NRM16":
+                                        self.has_16b_normal = True
+                                except:
+                                    pass
+                        if self.has_AO:
+                            self.SetBool(ID.DIALOG_MAP_AO_CB, True)
+                            self.Enable(ID.DIALOG_MAP_AO_CB, True)
+                        if self.has_disp:
+                            self.SetBool(ID.DIALOG_MAP_DISPL_CB, True)
+                            self.Enable(ID.DIALOG_MAP_DISPL_CB, True)
+                        if self.has_16b_disp:
+                            self.SetBool(ID.DIALOG_MAP_16B_DISPL_CB, True)
+                            self.Enable(ID.DIALOG_MAP_16B_DISPL_CB, True)
+                        if self.has_16b_normal:
+                            self.SetBool(ID.DIALOG_MAP_16B_NORMAL_CB, True)
+                            self.Enable(ID.DIALOG_MAP_16B_NORMAL_CB, True)
+                        if self.has_Ior:
+                            self.SetBool(ID.DIALOG_MAP_IOR_CB, False)
+                            self.Enable(ID.DIALOG_MAP_IOR_CB, True)
+                        if has_color:
+                            self.material_folder = path
+                            self.Enable(ID.DIALOG_LOAD_BUTTON, True)
+                            self.SetError("")
+                        else:
+                            self.SetError("One or more folders do not contain the correct Reawote material.")
+                    
                 else:
                     # print("Files not found")
                     continue
-                folder_path = os.path.join(path, folder)
-                subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
-                folder_dict[folder] = True
-                newID = len(self._listView.listOfTexture) + 1
-                tex = TextureObject(folder_name.format(newID))
-                self._listView.listOfTexture.append(tex)
-                checkbox_list.append(tex)
-                path_list.append(folder_path)
-                # print(f"{folder} checkbox was created and added to list.")
-                self._treegui.Refresh()
-                if folder_path:
-                    dir_path = os.listdir(folder_path)
-                    has_color = False
-                    for file in dir_path:
-                            try: 
-                                parts = file.split(".")[0].split("_")
-                                manufacturer = parts[0]
-                                product_number = parts[1]
-                                product = parts[2]
-                                mapID = parts[3]
-                                resolution = parts[4]
-                                if mapID == "DIFF" or mapID == "COLOR" or mapID == "COL":
-                                    has_color = True
-                                if mapID == "DISP16":
-                                    self.has_16b_disp = True
-                                    self.has_disp = True
-                                if mapID == "DISP":
-                                    self.has_disp = True
-                                if mapID == "AO":
-                                    self.has_AO = True
-                                if mapID == "IOR":
-                                    self.has_Ior = True
-                                if mapID == "NRM16":
-                                    self.has_16b_normal = True
-                            except:
-                                pass
-                    if self.has_AO:
-                        self.SetBool(ID.DIALOG_MAP_AO_CB, True)
-                        self.Enable(ID.DIALOG_MAP_AO_CB, True)
-                    if self.has_disp:
-                        self.SetBool(ID.DIALOG_MAP_DISPL_CB, True)
-                        self.Enable(ID.DIALOG_MAP_DISPL_CB, True)
-                    if self.has_16b_disp:
-                        self.SetBool(ID.DIALOG_MAP_16B_DISPL_CB, True)
-                        self.Enable(ID.DIALOG_MAP_16B_DISPL_CB, True)
-                    if self.has_16b_normal:
-                        self.SetBool(ID.DIALOG_MAP_16B_NORMAL_CB, True)
-                        self.Enable(ID.DIALOG_MAP_16B_NORMAL_CB, True)
-                    if self.has_Ior:
-                        self.SetBool(ID.DIALOG_MAP_IOR_CB, False)
-                        self.Enable(ID.DIALOG_MAP_IOR_CB, True)
-                    if has_color:
-                        self.material_folder = path
-                        self.Enable(ID.DIALOG_LOAD_BUTTON, True)
-                        self.SetError("")
-                    else:
-                        self.SetError("One or more folders do not contain the correct Reawote material.")
+
                 self.Enable(ID.DIALOG_LIST_BUTTON_MATERIAL, True)
                 self.Enable(ID.DIALOG_SELECT_ALL_BUTTON, True)
                 self.Enable(ID.DIALOG_REFRESH_ALL_BUTTON, True)
