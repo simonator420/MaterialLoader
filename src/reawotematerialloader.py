@@ -1075,9 +1075,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 
                 if has_hdr_files_in_list and not hdr_files:
                     print(f"Skipping {folder} because it does not contain HDR files.")
+                    # c4d.gui.MessageDialog("")
                     continue
                 if has_other_files_in_list and not other_files:
                     print(f"Skipping {folder} because it does not contain other supported files.")
+                    # c4d.gui.MessageDialog("")
                     continue
                 
                 if hdr_files and not other_files:
@@ -1293,6 +1295,69 @@ class ReawoteMaterialDialog(gui.GeDialog):
             mapID_list.clear()
             self._treegui.Refresh()
             self.Reset()
+            
+        if id == ID.DIALOG_LIST_BUTTON_HDRI:
+            active_checkbox_list = []
+            target_folders = ["1K", "2K", "3K", "4K", "5K", "6K", "7K", "8K", "9K", "10K", "11K", "12K", "13K", "14K", "15K", "16K"]
+            folder_dict = {}
+            for index, checkbox in enumerate(checkbox_list):
+                if checkbox.IsSelected:
+                    self.SetError("")
+                    active_checkbox_list.append(index)
+                    folder_path = path_list[index]
+                    if folder_path:
+                            # print(checkbox_list)
+                            # print(checkbox)
+                            
+                            ############
+                            # Redshift #
+                            ############
+                            
+                            if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6403:
+
+                                if not c4d.plugins.FindPlugin(1036219):
+                                    c4d.gui.MessageDialog("Redshift is not installed")
+                                    return
+
+                                dir = os.listdir(folder_path)
+                                doc = c4d.documents.GetActiveDocument()
+                                doc.StartUndo()
+                                render_data = doc.GetActiveRenderData()
+                                render_data[c4d.RDATA_RENDERENGINE] = 1036219
+                                c4d.EventAdd()
+                                
+                                try:
+                                    dome_light = c4d.BaseObject(1036751)  # 1036751 is the ID for Redshift Dome Light
+            
+                                    if not dome_light:
+                                        raise RuntimeError("Failed to create Redshift Dome Light. Make sure Redshift is installed and enabled.")
+
+                                    # Set a name for the Dome Light
+                                    dome_light.SetName(checkbox)
+                                    
+                                    dome_light[c4d.REDSHIFT_LIGHT_TYPE] = 4
+                                    
+                                    # Assign the first HDRI file in the folder as the Dome Light texture
+                                    hdr_files = [f for f in os.listdir(folder_path) if f.lower().endswith('.hdr') and not f.startswith('.')]
+                                    if hdr_files:
+                                        texture_path = os.path.join(folder_path, hdr_files[0])
+                                        dome_light[c4d.REDSHIFT_LIGHT_DOME_TEX0, c4d.REDSHIFT_FILE_PATH] = texture_path
+                                        print(f"Assigned HDRI: {texture_path} to Dome Light {index + 1}")
+                                    else:
+                                        print(f"No HDR files found in {folder_path}. Dome Light created without texture.")
+                                    
+                                    # Add the Dome Light to the scene
+                                    doc.InsertObject(dome_light)
+                                    doc.AddUndo(c4d.UNDOTYPE_NEW, dome_light)
+
+                                    # Update Cinema 4D
+                                    c4d.EventAdd()
+                                    
+                                except Exception as e:
+                                    print(f"Error: {e}")
+                                
+                                finally:
+                                    doc.EndUndo
 
         if id == ID.DIALOG_LIST_BUTTON_MATERIAL:
             active_checkbox_list = []
