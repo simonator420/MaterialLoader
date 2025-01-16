@@ -1309,6 +1309,46 @@ class ReawoteMaterialDialog(gui.GeDialog):
                             # print(checkbox_list)
                             # print(checkbox)
                             
+                            ##########
+                            # Corona #
+                            ##########
+                    
+                            if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6401:
+
+                                if not c4d.plugins.FindPlugin(1030480):
+                                    c4d.gui.MessageDialog("Corona is not installed")
+                                    return
+                                
+                                # Create Corona Sky (Dome Light)
+                                doc = c4d.documents.GetActiveDocument()
+                                sky_object = c4d.BaseObject(1053478)  # Corona Sky Object ID
+                                sky_object.SetName(checkbox)
+
+                                # # Create and assign HDRI texture shader
+                                texture = c4d.BaseShader(5833)  # Corona Bitmap Shader ID
+                                sky_object.InsertShader(texture)
+                                sky_object[21301] = texture
+
+                                # # Set Dome Light properties
+                                sky_object[c4d.CORONA_SKYOBJECT_TYPE] = 2  # HDRI type
+
+                                # Create and assign Corona Bitmap shader
+                                hdr_files = [f for f in os.listdir(folder_path) if f.lower().endswith('.hdr') and not f.startswith('.')]
+                                if hdr_files:
+                                    hdr_path = os.path.join(folder_path, hdr_files[0])
+                                    shd_tex = c4d.BaseShader(5833)
+                                    shd_tex[c4d.BITMAPSHADER_FILENAME] = hdr_path
+                                    sky_object.InsertShader(shd_tex)
+                                    sky_object[c4d.CORONA_SKYOBJECT_SHADER] = shd_tex
+                                    print(f"Assigned HDRI: {hdr_path} to Corona Dome Light with shader {shd_tex}")
+                                else:
+                                    print(f"No HDR files found in {folder_path}. Dome Light created without texture.")
+
+                                # Insert the Dome Light into the document and add undo
+                                doc.InsertObject(sky_object)
+                                doc.AddUndo(c4d.UNDOTYPE_NEWOBJ, sky_object)
+                                c4d.EventAdd()
+                            
                             ############
                             # Redshift #
                             ############
