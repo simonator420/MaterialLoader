@@ -660,7 +660,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
         self.AddButton(ID.DIALOG_CLEAN_BUTTON, c4d.BFH_CENTER, 60, 5, "Clean")
         self.GroupEnd()
 
-        self._treegui = self.AddCustomGui(9300, c4d.CUSTOMGUI_TREEVIEW, "",  c4d.BFH_SCALEFIT, 300, 300, customgui)
+        self._treegui = self.AddCustomGui(9300, c4d.CUSTOMGUI_TREEVIEW, "",  c4d.BFH_SCALEFIT, 300, 260, customgui)
         if not self._treegui:
             # print ("[ERROR]: Could not create TreeView")
             return False
@@ -1308,6 +1308,14 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     if folder_path:
                             # print(checkbox_list)
                             # print(checkbox)
+
+                            ############
+                            # Physical #
+                            ############    
+
+                            if self.GetInt32(ID.DIALOG_RENDERER_COMBOBOX) == 6400:
+                                c4d.gui.MessageDialog("HDRI is not available for Physical renderer. Please select any of the other renderers in the list.")
+                                return
                             
                             ##########
                             # Corona #
