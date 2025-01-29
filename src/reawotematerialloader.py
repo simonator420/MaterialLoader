@@ -833,13 +833,16 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 if image_files:
                     has_image_files = True
                     self.SetString(ID.DIALOG_FOLDER_LIST, path)
+                    self.SetString(ID.DIALOG_ERROR, "")
                     break  # Stop checking further once an image file is found
 
             # Skip processing if no image files are found in any folder
             if not has_image_files:
                 print("No materials found in the selected folders, skipping all processing.")
-                self.SetString(ID.DIALOG_FOLDER_LIST, "No materials found in the selected folders.")
+                self.SetString(ID.DIALOG_ERROR, "No materials found in the selected folders.")
                 return True
+            
+            
 
             # Store selected path only after verifying image files exist
             path_lists.append(path)
@@ -870,11 +873,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 self._listView.listOfTexture.append(tex)
                 checkbox_list.append(tex)
                 path_list.append(folder_path)
-                print(f"Tohle je tex: {tex}")
-                print(f"Tohle je folder_path: {folder_path}")
-                print(f"{folder} checkbox was created and added to list.")
-                print(path_list)
-                print(" ")
+                # print(f"Tohle je tex: {tex}")
+                # print(f"Tohle je folder_path: {folder_path}")
+                # print(f"{folder} checkbox was created and added to list.")
+                # print(path_list)
+                # print(" ")
                 self._treegui.Refresh()
                 if folder_path:
                     dir_path = os.listdir(folder_path)
@@ -961,7 +964,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     if dir in target_folders:
                         # print(dir)
                         same_path_dirs.append(os.path.join(root, dir))
-            print(f"These are same_path_dirs:", same_path_dirs)
             
             # Preliminary check for .hdr files in all target folders
             has_hdr_files = False
@@ -972,12 +974,12 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     has_hdr_files = True
                     self.SetString(ID.DIALOG_FOLDER_LIST, path)
                     path_lists.append(path)
+                    self.SetString(ID.DIALOG_ERROR, "")
                     break  # Stop checking further once a .hdr file is found
 
             # Skip processing if no .hdr files are found in any folder
             if not has_hdr_files:
-                print("No .hdr files found in the selected folders, skipping all processing.")
-                self.SetString(ID.DIALOG_FOLDER_LIST, "No .hdr files found in the selected folder(s).")
+                self.SetString(ID.DIALOG_ERROR, "No .hdr files found in the selected folder(s)")
                 return True
             
             for index, folder in enumerate(sorted(same_path_dirs)):
@@ -989,9 +991,7 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 if not hdr_files:
                     print(f"No .hdr files found in {folder}, skipping.")
                     continue
-                
-                print(f"Tohle jsou HDR files: {hdr_files}")
-                
+                                
                 folder_name = hdr_files[0].rpartition("_")[0]
                 folder_path = os.path.join(path, folder)
                 subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
@@ -1001,11 +1001,11 @@ class ReawoteMaterialDialog(gui.GeDialog):
                 self._listView.listOfTexture.append(tex)
                 checkbox_list.append(tex)
                 path_list.append(folder_path)
-                print(tex)
-                print(folder_path)
-                print(f"{folder} checkbox was created and added to list.")
-                print(path_list)
-                print(" ")
+                # print(tex)
+                # print(folder_path)
+                # print(f"{folder} checkbox was created and added to list.")
+                # print(path_list)
+                # print(" ")
                 self._treegui.Refresh()
                 
             self.Enable(ID.DIALOG_LIST_BUTTON_HDRI, True)
@@ -1069,21 +1069,18 @@ class ReawoteMaterialDialog(gui.GeDialog):
             for index, folder in enumerate(sorted(same_path_dirs)):
                 files = os.listdir(folder)
                 hdr_files = [f for f in files if f.lower().endswith('.hdr')]
-                print(f"Tohle jsou hdr_files {hdr_files}")
                 other_files = [f for f in files if not f.lower().endswith('.hdr') and not f.startswith('.')]
-                print(f"Tohle jsou other_files {other_files}")
                 
                 if has_hdr_files_in_list and not hdr_files:
-                    print(f"Skipping {folder} because it does not contain HDR files.")
+                    # print(f"Skipping {folder} because it does not contain HDR files.")
                     # c4d.gui.MessageDialog("")
                     continue
                 if has_other_files_in_list and not other_files:
-                    print(f"Skipping {folder} because it does not contain other supported files.")
+                    # print(f"Skipping {folder} because it does not contain other supported files.")
                     # c4d.gui.MessageDialog("")
                     continue
                 
                 if hdr_files and not other_files:
-                    print(f"Adding HDR files from {folder}")
                     folder_name = hdr_files[0].rpartition("_")[0]
                     folder_path = os.path.join(path, folder)
                     subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
@@ -1202,7 +1199,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                     
                     if hdr_files and not image_files:
                         # Process as HDRI
-                        print(f"Processing HDRI folder: {folder}")
                         folder_name = hdr_files[0].rpartition("_")[0]
                         folder_path = os.path.join(path, folder)
                         subdirs = [subdir for subdir in os.listdir(folder_path) if os.path.isdir(os.path.join(folder_path, subdir))]
@@ -1344,7 +1340,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     sky_object.InsertShader(shader_tex)
                                     sky_object[21301] = shader_tex
                                     sky_object[c4d.CORONA_SKYOBJECT_SHADER] = shader_tex
-                                    print(f"Assigned HDRI: {hdr_path} to Corona Dome Light with shader {shader_tex}")
                                 else:
                                     print(f"No HDR files found in {folder_path}. Dome Light created without texture.")
 
@@ -1377,7 +1372,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     shader_tex[c4d.BITMAPSHADER_FILENAME] = hdr_path
                                     dome_object.InsertShader(shader_tex)
                                     dome_object[c4d.LIGHTDOME_DOME_TEX] = shader_tex
-                                    print(f"Assigned HDRI: {hdr_path} to Corona Dome Light with shader {shader_tex}")
                                 else:
                                     print(f"No HDR files found in {folder_path}. Dome Light created without texture.")
                                     
@@ -1411,7 +1405,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     texture.InsertShader(shader_tex)
                                     shader_tex[c4d.BITMAPSHADER_FILENAME] = hdr_path
                                     texture[c4d.ENVIRONMENTTAG_TEXTURE] = shader_tex
-                                    print(f"Assigned HDRI: {hdr_path} to Octane Dome Light with shader {shader_tex}")
                                 else:
                                     print(f"No HDR files found in {folder_path}. Dome Light created without texture.")
     
@@ -1452,7 +1445,6 @@ class ReawoteMaterialDialog(gui.GeDialog):
                                     if hdr_files:
                                         texture_path = os.path.join(folder_path, hdr_files[0])
                                         dome_object[c4d.REDSHIFT_LIGHT_DOME_TEX0, c4d.REDSHIFT_FILE_PATH] = texture_path
-                                        print(f"Assigned HDRI: {texture_path} to Dome Light {index + 1}")
                                     else:
                                         print(f"No HDR files found in {folder_path}. Dome Light created without texture.")
                                     
